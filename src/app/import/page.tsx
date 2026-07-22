@@ -55,26 +55,6 @@ export default function ImportPage() {
     }
   }
 
-  async function handleMockData() {
-    setBusy(true);
-    setError(null);
-    setSummary(null);
-    try {
-      const res = await fetch("/api/mock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: 220 }),
-      });
-      const data = await res.json();
-      setSummary(data);
-      await refresh();
-    } catch {
-      setError("Could not generate mock data.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function handleReset() {
     if (!confirm("This will delete all delegates. Continue?")) return;
     setBusy(true);
@@ -96,7 +76,7 @@ export default function ImportPage() {
         that UUID.
       </p>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-10">
+      <div className="mb-10">
         <div className="rounded-2xl border border-warm-white/10 bg-warm-white/[0.03] shadow-lg shadow-navy/40 p-8">
           <h2 className="font-bold text-lg mb-3">Upload File</h2>
           <p className="text-warm-white/40 text-sm mb-5">
@@ -112,20 +92,6 @@ export default function ImportPage() {
               className="block w-full text-sm text-warm-white/70 file:mr-4 file:py-3 file:px-5 file:rounded-xl file:border-0 file:font-bold file:bg-teal file:text-navy hover:file:bg-teal/90 file:cursor-pointer cursor-pointer disabled:opacity-50"
             />
           </label>
-        </div>
-
-        <div className="rounded-2xl border border-warm-white/10 bg-warm-white/[0.03] shadow-lg shadow-navy/40 p-8">
-          <h2 className="font-bold text-lg mb-3">No file handy?</h2>
-          <p className="text-warm-white/40 text-sm mb-5">
-            Generate ~220 realistic mock delegates across 10 committees.
-          </p>
-          <button
-            onClick={handleMockData}
-            disabled={busy}
-            className="rounded-xl bg-warm-gold text-navy font-bold px-6 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            Generate Mock Data
-          </button>
         </div>
       </div>
 
@@ -203,7 +169,7 @@ export default function ImportPage() {
               {delegates.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-5 py-10 text-center text-warm-white/30">
-                    No delegates yet. Upload a file or generate mock data above.
+                    No delegates yet. Upload a file above.
                   </td>
                 </tr>
               )}

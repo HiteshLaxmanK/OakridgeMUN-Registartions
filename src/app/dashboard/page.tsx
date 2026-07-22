@@ -6,6 +6,7 @@ import type { Delegate, Stats } from "@/lib/types";
 import StatCard from "@/components/StatCard";
 import CommitteeProgressList from "@/components/CommitteeProgressList";
 import RecentCheckins from "@/components/RecentCheckins";
+import DelegateCard from "@/components/DelegateCard";
 
 const POLL_MS = 3000;
 
@@ -105,12 +106,12 @@ export default function DashboardPage() {
       <h2 ref={searchSectionRef} className="text-xl font-bold mb-4 scroll-mt-6">
         Search Delegates
       </h2>
-      <div className="flex flex-wrap gap-3 mb-5">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-5">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search name, school, country, committee, email..."
-          className="flex-1 min-w-[240px] rounded-xl bg-navy border border-warm-white/10 px-4 py-3 text-sm placeholder:text-warm-white/30 focus:outline-none focus:border-teal/60"
+          className="sm:flex-1 sm:min-w-[240px] rounded-xl bg-navy border border-warm-white/10 px-4 py-3 text-sm placeholder:text-warm-white/30 focus:outline-none focus:border-teal/60"
         />
         <select
           value={committee}
@@ -148,7 +149,21 @@ export default function DashboardPage() {
       </div>
 
       <div className="rounded-2xl border border-warm-white/10 shadow-lg shadow-navy/40 overflow-hidden bg-navy">
-        <div className="max-h-[480px] overflow-y-auto">
+        {/* Mobile: stacked cards. A wide 8-column table doesn't fit a phone
+            screen without breaking layout or forcing awkward horizontal
+            scrolling, so below md it's replaced with cards instead. */}
+        <div className="md:hidden max-h-[70vh] overflow-y-auto divide-y divide-warm-white/5">
+          {delegates.map((d) => (
+            <DelegateCard key={d.id} delegate={d} onCheckIn={manualCheckIn} />
+          ))}
+          {delegates.length === 0 && (
+            <p className="px-5 py-10 text-center text-warm-white/30 text-sm">
+              No delegates match your search.
+            </p>
+          )}
+        </div>
+
+        <div className="hidden md:block max-h-[480px] overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="bg-navy sticky top-0">
               <tr className="text-left text-warm-white/40 uppercase text-xs tracking-widest">

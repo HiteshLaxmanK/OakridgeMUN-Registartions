@@ -24,7 +24,6 @@ export const config = {
     "/dashboard",
     "/checkin",
     "/api/import",
-    "/api/mock",
     "/api/reset",
     "/api/checkin",
     "/api/stats",

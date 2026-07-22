@@ -103,19 +103,21 @@ export default function LiabilityFormCapture({
         <p className="text-warm-white/50 mb-6">{delegateName}</p>
 
         <div className="w-full aspect-square max-h-[55vh] rounded-3xl overflow-hidden border-4 border-teal/30 bg-black shadow-2xl shadow-navy/60 relative mb-6">
-          {!captured ? (
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              playsInline
-              muted
-            />
-          ) : (
+          {/* Kept permanently mounted so its srcObject binding survives
+              Retake — swapping it for an <img> would unmount and lose the
+              live camera stream. */}
+          <video
+            ref={videoRef}
+            className={`w-full h-full object-cover ${captured ? "hidden" : ""}`}
+            playsInline
+            muted
+          />
+          {captured && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={captured}
               alt="Captured liability form"
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
             />
           )}
           {error && (
