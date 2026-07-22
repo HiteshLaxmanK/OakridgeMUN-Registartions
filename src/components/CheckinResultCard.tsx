@@ -19,11 +19,13 @@ function formatTime(iso: string | null): string {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-baseline gap-8 border-b border-warm-white/15 pb-3 last:border-0 last:pb-0">
-      <span className="text-warm-white/70 font-bold uppercase text-xs tracking-widest">
+    <div className="flex justify-between items-baseline gap-3 sm:gap-8 border-b border-warm-white/15 pb-3 last:border-0 last:pb-0">
+      <span className="text-warm-white/70 font-bold uppercase text-xs tracking-widest shrink-0">
         {label}
       </span>
-      <span className="text-warm-white text-3xl font-extrabold text-right">{value}</span>
+      <span className="text-warm-white text-lg sm:text-3xl font-extrabold text-right">
+        {value}
+      </span>
     </div>
   );
 }
@@ -56,18 +58,18 @@ export default function CheckinResultCard({
 
   if (result.type === "not_found") {
     return (
-      <div className="fixed inset-0 z-40 flex items-center justify-center bg-bright-red animate-pop-in">
-        <div className="text-center px-8 w-full max-w-2xl">
-          <p className="text-9xl mb-6">✕</p>
-          <h2 className="text-4xl font-extrabold text-warm-white mb-3">
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-bright-red animate-pop-in overflow-y-auto p-4 sm:p-8">
+        <div className="text-center w-full max-w-2xl my-auto">
+          <p className="text-7xl sm:text-9xl mb-6">✕</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-warm-white mb-3">
             QR Not Recognized
           </h2>
-          <p className="text-warm-white/80 text-xl mb-10">
+          <p className="text-warm-white/80 text-lg sm:text-xl mb-10">
             This code doesn&apos;t match any imported delegate.
           </p>
           <button
             onClick={onConfirm}
-            className="rounded-2xl bg-warm-white text-bright-red font-extrabold text-2xl px-16 py-5 hover:bg-warm-white/90 transition-colors"
+            className="rounded-2xl bg-warm-white text-bright-red font-extrabold text-xl sm:text-2xl px-12 sm:px-16 py-4 sm:py-5 hover:bg-warm-white/90 transition-colors"
           >
             OK
           </button>
@@ -81,16 +83,16 @@ export default function CheckinResultCard({
 
   return (
     <div
-      className={`fixed inset-0 z-40 flex items-center justify-center animate-pop-in ${
+      className={`fixed inset-0 z-40 flex items-center justify-center animate-pop-in overflow-y-auto p-4 sm:p-8 ${
         isDuplicate ? "bg-bright-red" : "bg-dark-teal"
       }`}
     >
-      <div className="text-center px-8 w-full max-w-2xl">
-        <p className="text-9xl mb-4 leading-none">{isDuplicate ? "⚠" : "✓"}</p>
-        <h2 className="text-5xl font-extrabold text-warm-white mb-10">
+      <div className="text-center w-full max-w-2xl my-auto">
+        <p className="text-7xl sm:text-9xl mb-4 leading-none">{isDuplicate ? "⚠" : "✓"}</p>
+        <h2 className="text-3xl sm:text-5xl font-extrabold text-warm-white mb-6 sm:mb-10">
           {isDuplicate ? "Already Checked In" : "Checked In"}
         </h2>
-        <div className="bg-navy/40 rounded-2xl px-10 py-8 space-y-4 mb-6">
+        <div className="bg-navy/40 rounded-2xl px-5 sm:px-10 py-6 sm:py-8 space-y-3 sm:space-y-4 mb-6">
           <Row label="Name" value={d.name} />
           <Row label="School" value={d.school || "—"} />
           <Row label="Committee" value={d.committee || "—"} />
@@ -112,7 +114,7 @@ export default function CheckinResultCard({
         <button
           onClick={handleConfirm}
           disabled={saving}
-          className="rounded-2xl bg-warm-white text-navy font-extrabold text-2xl px-20 py-5 hover:bg-warm-white/90 transition-colors disabled:opacity-60"
+          className="rounded-2xl bg-warm-white text-navy font-extrabold text-xl sm:text-2xl px-14 sm:px-20 py-4 sm:py-5 hover:bg-warm-white/90 transition-colors disabled:opacity-60"
         >
           {saving ? "Saving..." : "OK"}
         </button>

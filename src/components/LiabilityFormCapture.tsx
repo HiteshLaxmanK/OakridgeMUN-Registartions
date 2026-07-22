@@ -94,15 +94,15 @@ export default function LiabilityFormCapture({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-navy p-6">
-      <div className="w-full max-w-xl text-center">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-navy p-4 sm:p-6 overflow-y-auto">
+      <div className="w-full max-w-xl text-center my-auto">
         <p className="text-xs font-bold uppercase tracking-widest text-teal mb-2">
           Step 2 of 2
         </p>
-        <h2 className="text-3xl font-extrabold mb-1">Liability Form</h2>
+        <h2 className="text-2xl sm:text-3xl font-extrabold mb-1">Liability Form</h2>
         <p className="text-warm-white/50 mb-6">{delegateName}</p>
 
-        <div className="w-full h-[380px] rounded-3xl overflow-hidden border-4 border-teal/30 bg-black shadow-2xl shadow-navy/60 relative mb-6">
+        <div className="w-full aspect-square max-h-[55vh] rounded-3xl overflow-hidden border-4 border-teal/30 bg-black shadow-2xl shadow-navy/60 relative mb-6">
           {!captured ? (
             <video
               ref={videoRef}
@@ -125,12 +125,12 @@ export default function LiabilityFormCapture({
           )}
         </div>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
           {!captured ? (
             <button
               onClick={handleCapture}
               disabled={!!error}
-              className="rounded-2xl bg-teal text-navy font-extrabold text-xl px-12 py-5 hover:bg-teal/90 transition-colors disabled:opacity-50"
+              className="rounded-2xl bg-teal text-navy font-extrabold text-lg sm:text-xl px-8 sm:px-12 py-4 sm:py-5 hover:bg-teal/90 transition-colors disabled:opacity-50"
             >
               Capture
             </button>
@@ -139,14 +139,14 @@ export default function LiabilityFormCapture({
               <button
                 onClick={handleRetake}
                 disabled={saving}
-                className="rounded-2xl bg-warm-white/10 border border-warm-white/20 font-bold text-lg px-8 py-4 hover:bg-warm-white/15 transition-colors disabled:opacity-50"
+                className="rounded-2xl bg-warm-white/10 border border-warm-white/20 font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 hover:bg-warm-white/15 transition-colors disabled:opacity-50"
               >
                 Retake
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="rounded-2xl bg-teal text-navy font-extrabold text-xl px-12 py-5 hover:bg-teal/90 transition-colors disabled:opacity-60"
+                className="rounded-2xl bg-teal text-navy font-extrabold text-lg sm:text-xl px-8 sm:px-12 py-4 sm:py-5 hover:bg-teal/90 transition-colors disabled:opacity-60"
               >
                 {saving ? "Saving..." : "Save & Continue"}
               </button>

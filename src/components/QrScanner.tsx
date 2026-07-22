@@ -65,7 +65,7 @@ export default function QrScanner({
   }, []);
 
   return (
-    <div className="w-full h-[420px] rounded-3xl overflow-hidden border-4 border-teal/30 bg-black shadow-2xl shadow-navy/60 relative max-w-xl mx-auto">
+    <div className="w-full aspect-square max-h-[70vh] rounded-3xl overflow-hidden border-4 border-teal/30 bg-black shadow-2xl shadow-navy/60 relative max-w-xl mx-auto">
       <div id={REGION_ID} className="w-full h-full [&_video]:!w-full [&_video]:!h-full [&_video]:object-cover" />
       {cameraError && (
         <div className="absolute inset-0 flex items-center justify-center bg-navy/95 p-8 text-center">
