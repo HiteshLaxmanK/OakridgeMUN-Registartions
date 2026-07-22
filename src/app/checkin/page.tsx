@@ -15,7 +15,7 @@ export default function CheckinPage() {
   const [manualOpen, setManualOpen] = useState(false);
   const lockedRef = useRef(false);
 
-  const performCheckin = useCallback(async (id: string) => {
+  const performCheckin = useCallback(async (id: string, method: "qr" | "manual") => {
     if (lockedRef.current) return;
     lockedRef.current = true;
     setManualOpen(false);
@@ -24,7 +24,7 @@ export default function CheckinPage() {
       const res = await fetch("/api/checkin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, method }),
       });
       const data = await res.json();
 
@@ -61,7 +61,9 @@ export default function CheckinPage() {
         <p className="text-warm-white/50">Point a delegate&apos;s QR code at the camera.</p>
       </div>
 
-      {!manualOpen && !liabilityDelegate && <QrScanner onScan={performCheckin} />}
+      {!manualOpen && !liabilityDelegate && (
+        <QrScanner onScan={(id) => performCheckin(id, "qr")} />
+      )}
 
       <div className="text-center mt-8">
         <button
@@ -74,7 +76,7 @@ export default function CheckinPage() {
 
       {manualOpen && (
         <div className="mt-8">
-          <ManualSearch onSelect={performCheckin} />
+          <ManualSearch onSelect={(id) => performCheckin(id, "manual")} />
         </div>
       )}
 

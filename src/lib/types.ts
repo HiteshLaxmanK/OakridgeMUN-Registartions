@@ -7,6 +7,7 @@ export interface Delegate {
   country: string;
   checkedIn: boolean;
   checkedInAt: string | null;
+  checkedInMethod: "qr" | "manual" | null;
   note: string | null;
   liabilityFormOnFile: boolean;
   liabilityFormAt: string | null;

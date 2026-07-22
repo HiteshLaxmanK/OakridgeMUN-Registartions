@@ -11,6 +11,7 @@ interface DelegateRow {
   country: string;
   checked_in: boolean;
   checked_in_at: string | null;
+  checked_in_method: "qr" | "manual" | null;
   note: string | null;
   liability_form_on_file: boolean;
   liability_form_at: string | null;
@@ -27,6 +28,7 @@ function fromRow(row: DelegateRow): Delegate {
     country: row.country,
     checkedIn: row.checked_in,
     checkedInAt: row.checked_in_at,
+    checkedInMethod: row.checked_in_method,
     note: row.note,
     liabilityFormOnFile: row.liability_form_on_file,
     liabilityFormAt: row.liability_form_at,
@@ -97,6 +99,7 @@ export async function insertDelegates(rows: ImportRow[]): Promise<{
       country: (row.country || "").trim(),
       checked_in: false,
       checked_in_at: null,
+      checked_in_method: null,
       note: null,
       liability_form_on_file: false,
       liability_form_at: null,
@@ -137,6 +140,8 @@ export interface SearchQuery {
   school?: string;
   country?: string;
   checkedIn?: "true" | "false";
+  liabilityForm?: "true" | "false";
+  method?: "qr" | "manual";
 }
 
 export async function searchDelegates(query: SearchQuery): Promise<Delegate[]> {
@@ -147,6 +152,12 @@ export async function searchDelegates(query: SearchQuery): Promise<Delegate[]> {
   } else if (query.checkedIn === "false") {
     builder = builder.eq("checked_in", false);
   }
+  if (query.liabilityForm === "true") {
+    builder = builder.eq("liability_form_on_file", true);
+  } else if (query.liabilityForm === "false") {
+    builder = builder.eq("liability_form_on_file", false);
+  }
+  if (query.method) builder = builder.eq("checked_in_method", query.method);
   if (query.committee) builder = builder.eq("committee", query.committee);
   if (query.school) builder = builder.eq("school", query.school);
   if (query.country) builder = builder.eq("country", query.country);
@@ -170,7 +181,8 @@ export async function searchDelegates(query: SearchQuery): Promise<Delegate[]> {
 }
 
 export async function checkInDelegate(
-  id: string
+  id: string,
+  method: "qr" | "manual" = "qr"
 ): Promise<
   | { status: "success"; delegate: Delegate }
   | { status: "duplicate"; delegate: Delegate }
@@ -183,7 +195,7 @@ export async function checkInDelegate(
   const checkedInAt = new Date().toISOString();
   const { data, error } = await supabase
     .from("delegates")
-    .update({ checked_in: true, checked_in_at: checkedInAt })
+    .update({ checked_in: true, checked_in_at: checkedInAt, checked_in_method: method })
     .eq("id", id)
     .eq("checked_in", false)
     .select()

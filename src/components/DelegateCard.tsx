@@ -37,7 +37,9 @@ export default function DelegateCard({
               : "bg-warm-white/5 text-warm-white/40"
           }`}
         >
-          {delegate.checkedIn ? "✓ Checked In" : "Not Checked In"}
+          {delegate.checkedIn
+            ? `✓ Checked In${delegate.checkedInMethod === "manual" ? " (Manual)" : ""}`
+            : "Not Checked In"}
         </span>
         <span
           className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${

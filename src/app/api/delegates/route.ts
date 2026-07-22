@@ -14,8 +14,24 @@ export async function GET(req: NextRequest) {
     checkedInParam === "true" || checkedInParam === "false"
       ? checkedInParam
       : undefined;
+  const liabilityFormParam = searchParams.get("liabilityForm");
+  const liabilityForm =
+    liabilityFormParam === "true" || liabilityFormParam === "false"
+      ? liabilityFormParam
+      : undefined;
+  const methodParam = searchParams.get("method");
+  const method =
+    methodParam === "qr" || methodParam === "manual" ? methodParam : undefined;
 
-  const delegates = await searchDelegates({ q, committee, school, country, checkedIn });
+  const delegates = await searchDelegates({
+    q,
+    committee,
+    school,
+    country,
+    checkedIn,
+    liabilityForm,
+    method,
+  });
   const facets = await getFacets();
 
   return NextResponse.json({ delegates, facets });

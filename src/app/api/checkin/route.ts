@@ -4,12 +4,23 @@ import { checkInDelegate } from "@/lib/db";
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const id = typeof body.id === "string" ? body.id.trim() : "";
+  const method = body.method === "manual" ? "manual" : "qr";
 
   if (!id) {
     return NextResponse.json({ error: "Missing delegate id." }, { status: 400 });
   }
 
-  const result = await checkInDelegate(id);
+  // Only the dashboard's manual override button sends a password — the
+  // normal /checkin flow (QR scan or its own manual search) never does,
+  // so this barrier only applies there.
+  if (typeof body.password === "string") {
+    const adminPassword = process.env.ADMIN_PASSWORD || "";
+    if (!adminPassword || body.password !== adminPassword) {
+      return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
+    }
+  }
+
+  const result = await checkInDelegate(id, method);
 
   if (result.status === "not_found") {
     return NextResponse.json(
