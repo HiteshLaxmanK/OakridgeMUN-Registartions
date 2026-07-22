@@ -1,0 +1,8 @@
+node_modules
+.next
+.env*.local
+data/*.json
+data/liability-forms
+!data/.gitkeep
+*.tsbuildinfo
+next-env.d.ts
