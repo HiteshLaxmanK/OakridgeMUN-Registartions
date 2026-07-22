@@ -145,7 +145,7 @@ export default function DashboardPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-teal/45 via-teal/50 to-teal/65" />
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-[1700px] mx-auto px-6 py-12">
         <h1 className="text-3xl font-extrabold mb-8">Admin Dashboard</h1>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-5 mb-8">
@@ -245,32 +245,45 @@ export default function DashboardPage() {
           <table className="w-full text-sm">
             <thead className="bg-navy sticky top-0">
               <tr className="text-left text-warm-white/40 uppercase text-xs tracking-widest">
-                <th className="px-5 py-3">Name</th>
-                <th className="px-5 py-3">School</th>
-                <th className="px-5 py-3">Committee</th>
-                <th className="px-5 py-3">Country</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Method</th>
-                <th className="px-5 py-3">Liability Form</th>
-                <th className="px-5 py-3">PDF</th>
-                <th className="px-5 py-3"></th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">School</th>
+                <th className="px-4 py-3">Committee</th>
+                <th className="px-4 py-3">Country</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Method</th>
+                <th className="px-4 py-3">Liability Form</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {delegates.map((d) => (
                 <tr key={d.id} className="border-t border-warm-white/5 hover:bg-warm-white/[0.02]">
-                  <td className="px-5 py-3 font-medium">{d.name}</td>
-                  <td className="px-5 py-3 text-warm-white/60">{d.school}</td>
-                  <td className="px-5 py-3 text-warm-white/60">{d.committee}</td>
-                  <td className="px-5 py-3 text-warm-white/60">{d.country}</td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-3 font-medium max-w-[220px] truncate" title={d.name}>
+                    {d.name}
+                  </td>
+                  <td
+                    className="px-4 py-3 text-warm-white/60 max-w-[200px] truncate"
+                    title={d.school}
+                  >
+                    {d.school}
+                  </td>
+                  <td className="px-4 py-3 text-warm-white/60 whitespace-nowrap">
+                    {d.committee}
+                  </td>
+                  <td
+                    className="px-4 py-3 text-warm-white/60 max-w-[260px] truncate"
+                    title={d.country}
+                  >
+                    {d.country}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
                     {d.checkedIn ? (
                       <span className="text-teal font-semibold">✓ Checked In</span>
                     ) : (
                       <span className="text-warm-white/30">Not Checked In</span>
                     )}
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     {d.checkedInMethod ? (
                       <span className="text-warm-white/60">
                         {d.checkedInMethod === "qr" ? "QR Scan" : "Manual"}
@@ -279,28 +292,21 @@ export default function DashboardPage() {
                       <span className="text-warm-white/30">—</span>
                     )}
                   </td>
-                  <td className="px-5 py-3">
-                    {d.liabilityFormOnFile ? (
-                      <span className="text-warm-gold font-semibold">✓ Uploaded</span>
-                    ) : (
-                      <span className="text-warm-white/30">Not Uploaded</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     {d.liabilityFormOnFile ? (
                       <a
                         href={`/api/delegates/${d.id}/liability-form`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-teal font-semibold hover:underline"
+                        className="text-warm-gold font-semibold hover:underline"
                       >
-                        View PDF
+                        ✓ Uploaded — View PDF
                       </a>
                     ) : (
-                      <span className="text-warm-white/30">—</span>
+                      <span className="text-warm-white/30">Not Uploaded</span>
                     )}
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
                     {!d.checkedIn && (
                       <button
                         onClick={() => requestManualCheckIn(d.id)}
@@ -314,7 +320,7 @@ export default function DashboardPage() {
               ))}
               {delegates.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-5 py-10 text-center text-warm-white/30">
+                  <td colSpan={8} className="px-5 py-10 text-center text-warm-white/30">
                     No delegates match your search.
                   </td>
                 </tr>
