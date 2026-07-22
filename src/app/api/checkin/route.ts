@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
   // normal /checkin flow (QR scan or its own manual search) never does,
   // so this barrier only applies there.
   if (typeof body.password === "string") {
-    const adminPassword = process.env.ADMIN_PASSWORD || "";
-    if (!adminPassword || body.password !== adminPassword) {
+    const overridePassword = process.env.MANUAL_CHECKIN_PASSWORD || "";
+    if (!overridePassword || body.password !== overridePassword) {
       return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
     }
   }

@@ -46,7 +46,7 @@ export default function PasswordPrompt({
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Admin password"
+          placeholder="Manual check-in password"
           autoFocus
           className="w-full rounded-xl bg-warm-white/[0.06] border border-warm-white/15 px-4 py-3 text-base mb-4 focus:outline-none focus:border-teal/60"
         />
