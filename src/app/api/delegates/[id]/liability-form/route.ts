@@ -3,6 +3,8 @@ import { PDFDocument } from "pdf-lib";
 import { getDelegateById, markLiabilityFormOnFile } from "@/lib/db";
 import { supabase, LIABILITY_FORMS_BUCKET } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 function pathFor(id: string) {
   return `${id}.pdf`;
 }

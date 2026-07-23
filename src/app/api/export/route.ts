@@ -3,6 +3,8 @@ import * as XLSX from "xlsx";
 import { getAllDelegates } from "@/lib/db";
 import type { Delegate } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 const HEADERS = ["Name", "Committee", "Checked In", "Check-in Method", "Checked In By", "Liability Form"];
 const LIABILITY_COL = 5;
 
