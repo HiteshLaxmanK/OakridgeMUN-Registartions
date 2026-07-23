@@ -32,7 +32,7 @@ export default function Nav() {
 
   const visibleHrefs = role ? LINKS_BY_ROLE[role] || [] : ALL_LINKS.map((l) => l.href);
   const links = ALL_LINKS.filter((l) => visibleHrefs.includes(l.href));
-  const isProtected = ALL_LINKS.some((link) => link.href === pathname);
+  const isProtected = pathname === "/" || ALL_LINKS.some((link) => link.href === pathname);
 
   async function handleLogout() {
     await fetch("/api/logout", { method: "POST" });
