@@ -275,3 +275,51 @@ export async function getFacets() {
   const countries = Array.from(new Set(delegates.map((d) => d.country))).sort();
   return { committees, schools, countries };
 }
+
+export interface QrLookup {
+  id: string;
+  email: string;
+  found: boolean;
+  delegateId: string | null;
+  createdAt: string;
+}
+
+export interface QrLookupStats {
+  totalLookups: number;
+  uniqueEmails: number;
+  foundCount: number;
+  notFoundCount: number;
+  lookups: QrLookup[];
+}
+
+export async function getQrLookupStats(): Promise<QrLookupStats> {
+  const { data, error } = await supabase
+    .from("qr_lookups")
+    .select("id, email, found, delegate_id, created_at")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+
+  const rows = (data || []) as {
+    id: string;
+    email: string;
+    found: boolean;
+    delegate_id: string | null;
+    created_at: string;
+  }[];
+
+  const lookups: QrLookup[] = rows.map((r) => ({
+    id: r.id,
+    email: r.email,
+    found: r.found,
+    delegateId: r.delegate_id,
+    createdAt: r.created_at,
+  }));
+
+  return {
+    totalLookups: lookups.length,
+    uniqueEmails: new Set(lookups.map((l) => l.email)).size,
+    foundCount: lookups.filter((l) => l.found).length,
+    notFoundCount: lookups.filter((l) => !l.found).length,
+    lookups,
+  };
+}
