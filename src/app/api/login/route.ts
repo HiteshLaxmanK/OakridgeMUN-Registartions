@@ -4,9 +4,9 @@ import { SESSION_COOKIE, sessionToken } from "@/lib/auth";
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const password = typeof body.password === "string" ? body.password : "";
-  const adminPassword = process.env.ADMIN_PASSWORD || "";
-  const ocScanPassword = process.env.OC_SCAN_PASSWORD || "";
-  const ocHelpdeskPassword = process.env.OC_HELPDESK_PASSWORD || "";
+  const adminPassword = process.env.SUPER_ADMIN_PASSWORD || "";
+  const ocScanPassword = process.env.OC_SCAN_DESK_PASSWORD || "";
+  const ocHelpdeskPassword = process.env.OC_HELP_DESK_PASSWORD || "";
 
   let role: "admin" | "oc_scan" | "oc_helpdesk" | null = null;
   if (adminPassword && password === adminPassword) role = "admin";

@@ -25,9 +25,9 @@ export async function middleware(req: NextRequest) {
 
   const cookie = req.cookies.get(SESSION_COOKIE)?.value;
   const [adminExpected, ocScanExpected, ocHelpdeskExpected] = await Promise.all([
-    sessionToken(process.env.ADMIN_PASSWORD || ""),
-    sessionToken(process.env.OC_SCAN_PASSWORD || ""),
-    sessionToken(process.env.OC_HELPDESK_PASSWORD || ""),
+    sessionToken(process.env.SUPER_ADMIN_PASSWORD || ""),
+    sessionToken(process.env.OC_SCAN_DESK_PASSWORD || ""),
+    sessionToken(process.env.OC_HELP_DESK_PASSWORD || ""),
   ]);
 
   let role: Role | null = null;
