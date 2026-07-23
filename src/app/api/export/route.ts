@@ -60,6 +60,10 @@ export async function GET(req: NextRequest) {
     }
     XLSX.utils.book_append_sheet(workbook, sheetFor(delegates, origin), safeSheetName(committeeParam));
   } else {
+    // Combined "who registered" master list, checked first before the
+    // per-committee breakdown sheets.
+    XLSX.utils.book_append_sheet(workbook, sheetFor(all, origin), "Verification");
+
     const committees = Array.from(new Set(all.map((d) => d.committee))).sort();
     for (const committee of committees) {
       const delegates = all.filter((d) => d.committee === committee);

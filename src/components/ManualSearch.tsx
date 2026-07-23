@@ -56,6 +56,15 @@ export default function ManualSearch({
               <p className="text-warm-white/50 text-sm">
                 {d.school} · {d.committee} · {d.country}
               </p>
+              {readOnly && (
+                <p className="text-sm mt-1">
+                  {d.liabilityFormOnFile ? (
+                    <span className="text-teal font-semibold">✓ Liability Form on File</span>
+                  ) : (
+                    <span className="text-bright-red/80 font-semibold">✕ Liability Form Missing</span>
+                  )}
+                </p>
+              )}
             </>
           );
 
