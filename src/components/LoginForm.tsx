@@ -20,12 +20,14 @@ export default function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         setError(data.error || "Incorrect password.");
         return;
       }
-      const dest = params.get("from") || "/dashboard";
+      const from = params.get("from");
+      const isOc = data.role === "oc_scan" || data.role === "oc_helpdesk";
+      const dest = isOc ? "/checkin" : from || "/dashboard";
       router.push(dest);
       router.refresh();
     } finally {

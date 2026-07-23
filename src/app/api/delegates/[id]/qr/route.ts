@@ -17,10 +17,15 @@ export async function GET(
     width: 400,
   });
 
-  return new NextResponse(new Uint8Array(buffer), {
-    headers: {
-      "Content-Type": "image/png",
-      "Cache-Control": "no-store",
-    },
-  });
+  const headers: Record<string, string> = {
+    "Content-Type": "image/png",
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
+  };
+
+  if (req.nextUrl.searchParams.get("download") === "1") {
+    headers["Content-Disposition"] = `attachment; filename="oakridge-mun-qr-${delegate.id}.png"`;
+  }
+
+  return new NextResponse(new Uint8Array(buffer), { headers });
 }

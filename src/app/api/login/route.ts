@@ -5,13 +5,20 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const password = typeof body.password === "string" ? body.password : "";
   const adminPassword = process.env.ADMIN_PASSWORD || "";
+  const ocScanPassword = process.env.OC_SCAN_PASSWORD || "";
+  const ocHelpdeskPassword = process.env.OC_HELPDESK_PASSWORD || "";
 
-  if (!adminPassword || password !== adminPassword) {
+  let role: "admin" | "oc_scan" | "oc_helpdesk" | null = null;
+  if (adminPassword && password === adminPassword) role = "admin";
+  else if (ocScanPassword && password === ocScanPassword) role = "oc_scan";
+  else if (ocHelpdeskPassword && password === ocHelpdeskPassword) role = "oc_helpdesk";
+
+  if (!role) {
     return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
   }
 
-  const token = await sessionToken(adminPassword);
-  const res = NextResponse.json({ ok: true });
+  const token = await sessionToken(password);
+  const res = NextResponse.json({ ok: true, role });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

@@ -1,19 +1,38 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-const LINKS = [
+const ALL_LINKS = [
   { href: "/import", label: "Import" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/checkin", label: "Check-in" },
+  { href: "/verify", label: "Verify" },
 ];
+
+const LINKS_BY_ROLE: Record<string, string[]> = {
+  admin: ["/import", "/dashboard", "/checkin", "/verify"],
+  oc_scan: ["/checkin", "/verify"],
+  oc_helpdesk: ["/checkin"],
+};
 
 export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
-  const isProtected = LINKS.some((link) => link.href === pathname);
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/session")
+      .then((res) => res.json())
+      .then((data) => setRole(data.role))
+      .catch(() => setRole(null));
+  }, [pathname]);
+
+  const visibleHrefs = role ? LINKS_BY_ROLE[role] || [] : ALL_LINKS.map((l) => l.href);
+  const links = ALL_LINKS.filter((l) => visibleHrefs.includes(l.href));
+  const isProtected = ALL_LINKS.some((link) => link.href === pathname);
 
   async function handleLogout() {
     await fetch("/api/logout", { method: "POST" });
@@ -42,7 +61,7 @@ export default function Nav() {
         </span>
       </Link>
       <div className="flex gap-1 sm:gap-2 overflow-x-auto">
-        {LINKS.map((link) => {
+        {links.map((link) => {
           const active = pathname === link.href;
           return (
             <Link

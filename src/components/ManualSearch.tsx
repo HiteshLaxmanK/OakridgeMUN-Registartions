@@ -5,8 +5,10 @@ import type { Delegate } from "@/lib/types";
 
 export default function ManualSearch({
   onSelect,
+  readOnly = false,
 }: {
-  onSelect: (id: string) => void;
+  onSelect?: (id: string) => void;
+  readOnly?: boolean;
 }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Delegate[]>([]);
@@ -34,23 +36,50 @@ export default function ManualSearch({
         className="w-full rounded-2xl bg-warm-white/[0.06] border border-warm-white/15 px-6 py-4 text-lg placeholder:text-warm-white/30 focus:outline-none focus:border-teal/60"
       />
       <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
-        {results.map((d) => (
-          <button
-            key={d.id}
-            onClick={() => onSelect(d.id)}
-            className="w-full text-left rounded-xl bg-warm-white/[0.04] hover:bg-teal/15 border border-warm-white/10 hover:border-teal/40 px-5 py-4 transition-colors"
-          >
-            <p className="font-bold text-lg flex items-center justify-between">
-              {d.name}
-              {d.checkedIn && (
-                <span className="text-xs font-semibold text-teal">✓ Checked In</span>
-              )}
-            </p>
-            <p className="text-warm-white/50 text-sm">
-              {d.school} · {d.committee} · {d.country}
-            </p>
-          </button>
-        ))}
+        {results.map((d) => {
+          const content = (
+            <>
+              <p className="font-bold text-lg flex items-center justify-between">
+                {d.name}
+                {d.checkedIn ? (
+                  <span className="text-xs font-semibold text-teal">
+                    ✓ Checked In{readOnly && d.checkedInMethod ? ` (${d.checkedInMethod === "qr" ? "QR" : "Manual"})` : ""}
+                  </span>
+                ) : (
+                  readOnly && (
+                    <span className="text-xs font-semibold text-warm-white/30">
+                      Not checked in
+                    </span>
+                  )
+                )}
+              </p>
+              <p className="text-warm-white/50 text-sm">
+                {d.school} · {d.committee} · {d.country}
+              </p>
+            </>
+          );
+
+          if (readOnly) {
+            return (
+              <div
+                key={d.id}
+                className="w-full text-left rounded-xl bg-warm-white/[0.04] border border-warm-white/10 px-5 py-4"
+              >
+                {content}
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={d.id}
+              onClick={() => onSelect?.(d.id)}
+              className="w-full text-left rounded-xl bg-warm-white/[0.04] hover:bg-teal/15 border border-warm-white/10 hover:border-teal/40 px-5 py-4 transition-colors"
+            >
+              {content}
+            </button>
+          );
+        })}
         {q.trim() && results.length === 0 && (
           <p className="text-warm-white/30 text-center py-4">No delegates found.</p>
         )}
