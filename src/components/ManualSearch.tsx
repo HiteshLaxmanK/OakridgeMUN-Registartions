@@ -10,13 +10,14 @@ export default function ManualSearch({
   onSelect?: (id: string) => void;
   readOnly?: boolean;
 }) {
+  const RESULT_CAP = 10;
   const [q, setQ] = useState("");
-  const [results, setResults] = useState<Delegate[]>([]);
+  const [allResults, setAllResults] = useState<Delegate[]>([]);
   const [searchError, setSearchError] = useState(false);
 
   useEffect(() => {
     if (!q.trim()) {
-      setResults([]);
+      setAllResults([]);
       setSearchError(false);
       return;
     }
@@ -28,12 +29,12 @@ export default function ManualSearch({
         });
         if (!res.ok) throw new Error(`search failed: ${res.status}`);
         const data = await res.json();
-        setResults((data.delegates || []).slice(0, 8));
+        setAllResults(data.delegates || []);
         setSearchError(false);
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error("Delegate search failed", err);
-        setResults([]);
+        setAllResults([]);
         setSearchError(true);
       }
     }, 150);
@@ -42,6 +43,15 @@ export default function ManualSearch({
       controller.abort();
     };
   }, [q]);
+
+  // Not-yet-checked-in matches first — that's who a registration desk is
+  // actually looking for. Already-checked-in matches are still shown
+  // (staff needs to confirm "yes, already done") but sink to the bottom.
+  const sorted = readOnly
+    ? allResults
+    : [...allResults].sort((a, b) => Number(a.checkedIn) - Number(b.checkedIn));
+  const results = sorted.slice(0, RESULT_CAP);
+  const hiddenCount = sorted.length - results.length;
 
   return (
     <div className="w-full max-w-xl mx-auto">
@@ -56,20 +66,21 @@ export default function ManualSearch({
         {results.map((d) => {
           const content = (
             <>
-              <p className="font-bold text-lg flex items-center justify-between">
-                {d.name}
+              <p className="font-bold text-lg flex items-center justify-between gap-3">
+                <span className="truncate">{d.name}</span>
                 {d.checkedIn ? (
-                  <span className="text-xs font-semibold text-teal">
+                  <span className="text-xs font-semibold text-teal shrink-0">
                     ✓ Checked In{readOnly && d.checkedInMethod ? ` (${d.checkedInMethod === "qr" ? "QR" : "Manual"})` : ""}
                   </span>
                 ) : (
                   readOnly && (
-                    <span className="text-xs font-semibold text-warm-white/30">
+                    <span className="text-xs font-semibold text-warm-white/30 shrink-0">
                       Not checked in
                     </span>
                   )
                 )}
               </p>
+              <p className="text-warm-white/50 text-sm truncate">{d.email}</p>
               <p className="text-warm-white/50 text-sm">
                 {d.school} · {d.committee} · {d.country}
               </p>
@@ -100,7 +111,11 @@ export default function ManualSearch({
             <button
               key={d.id}
               onClick={() => onSelect?.(d.id)}
-              className="w-full text-left rounded-xl bg-warm-white/[0.04] hover:bg-teal/15 border border-warm-white/10 hover:border-teal/40 px-5 py-4 transition-colors"
+              className={`w-full text-left rounded-xl border px-5 py-4 transition-colors ${
+                d.checkedIn
+                  ? "bg-warm-white/[0.015] border-warm-white/5 opacity-60 hover:opacity-100 hover:bg-warm-white/[0.04]"
+                  : "bg-warm-white/[0.04] border-warm-white/10 hover:bg-teal/15 hover:border-teal/40"
+              }`}
             >
               {content}
             </button>
@@ -113,6 +128,11 @@ export default function ManualSearch({
         )}
         {!searchError && q.trim() && results.length === 0 && (
           <p className="text-warm-white/30 text-center py-4">No delegates found.</p>
+        )}
+        {!searchError && hiddenCount > 0 && (
+          <p className="text-warm-white/30 text-xs text-center py-2">
+            +{hiddenCount} more match{hiddenCount === 1 ? "" : "es"} — keep typing to narrow it down.
+          </p>
         )}
       </div>
     </div>

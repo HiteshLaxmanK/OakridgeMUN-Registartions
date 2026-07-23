@@ -25,7 +25,13 @@ export default function CheckinPage() {
   useEffect(() => {
     fetch("/api/session")
       .then((res) => res.json())
-      .then((data) => setRole(data.role))
+      .then((data) => {
+        setRole(data.role);
+        // Help desk's entire job is manual registration for delegates
+        // without a QR — default straight to search instead of making
+        // them detour through the scanner every time the page loads.
+        if (data.role === "oc_helpdesk") setManualOpen(true);
+      })
       .catch(() => setRole(null));
   }, []);
 
@@ -131,7 +137,13 @@ export default function CheckinPage() {
             onClick={() => setManualOpen((v) => !v)}
             className="rounded-2xl bg-warm-white/[0.06] hover:bg-warm-white/[0.1] border border-warm-white/15 px-8 py-4 text-lg font-bold transition-colors"
           >
-            {manualOpen ? "Back to Scanner" : "Forgot QR? Search Manually"}
+            {role === "oc_helpdesk"
+              ? manualOpen
+                ? "Use Camera Scanner Instead"
+                : "Back to Search"
+              : manualOpen
+                ? "Back to Scanner"
+                : "Forgot QR? Search Manually"}
           </button>
         </div>
       )}
