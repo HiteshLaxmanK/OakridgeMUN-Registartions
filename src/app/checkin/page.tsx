@@ -36,30 +36,45 @@ export default function CheckinPage() {
     lockedRef.current = true;
     setManualOpen(false);
 
+    // Abort a hung request instead of freezing this scanning station.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const res = await fetch("/api/checkin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, method }),
+        signal: controller.signal,
       });
-      const data = await res.json();
-
-      if (res.status === 404 || data.status === "not_found") {
+      // A real 404 means the QR genuinely isn't a delegate. Any 5xx is a
+      // server/DB hiccup — never tell staff a valid delegate is "not found".
+      if (res.status === 404) {
         setResult({ type: "not_found" });
-      } else if (data.status === "duplicate") {
-        setResult({ type: "duplicate", delegate: data.delegate });
+      } else if (!res.ok) {
+        setResult({ type: "error" });
       } else {
-        setResult({ type: "success", delegate: data.delegate });
+        const data = await res.json();
+        if (data.status === "not_found") {
+          setResult({ type: "not_found" });
+        } else if (data.status === "duplicate") {
+          setResult({ type: "duplicate", delegate: data.delegate });
+        } else {
+          setResult({ type: "success", delegate: data.delegate });
+        }
       }
     } catch {
-      setResult({ type: "not_found" });
+      // Network drop or 15s timeout — recoverable, so prompt a rescan.
+      setResult({ type: "error" });
+    } finally {
+      clearTimeout(timeout);
     }
   }, []);
 
   const confirmResult = useCallback(() => {
-    if (result && result.type !== "not_found") {
+    if (result && (result.type === "success" || result.type === "duplicate")) {
       setLiabilityDelegate({ id: result.delegate.id, name: result.delegate.name });
     } else {
+      // not_found or error: release the lock so the next scan is accepted.
       lockedRef.current = false;
     }
     setResult(null);

@@ -105,6 +105,8 @@ export default function DashboardPage() {
       }
       if (res.status === 404 || data.status === "not_found") {
         setResult({ type: "not_found" });
+      } else if (!res.ok) {
+        return data.error || "Check-in service unavailable. Try again.";
       } else if (data.status === "duplicate") {
         setResult({ type: "duplicate", delegate: data.delegate });
       } else {
@@ -120,7 +122,7 @@ export default function DashboardPage() {
   }
 
   const confirmResult = useCallback(() => {
-    if (result && result.type !== "not_found") {
+    if (result && (result.type === "success" || result.type === "duplicate")) {
       setLiabilityDelegate({ id: result.delegate.id, name: result.delegate.name });
     }
     setResult(null);

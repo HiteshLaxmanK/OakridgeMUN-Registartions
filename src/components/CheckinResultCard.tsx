@@ -6,7 +6,8 @@ import type { Delegate } from "@/lib/types";
 export type ScanResult =
   | { type: "success"; delegate: Delegate }
   | { type: "duplicate"; delegate: Delegate }
-  | { type: "not_found" };
+  | { type: "not_found" }
+  | { type: "error"; message?: string };
 
 function formatTime(iso: string | null): string {
   if (!iso) return "—";
@@ -41,7 +42,7 @@ export default function CheckinResultCard({
   const [saving, setSaving] = useState(false);
 
   async function handleConfirm() {
-    if (result.type !== "not_found" && note.trim()) {
+    if ((result.type === "success" || result.type === "duplicate") && note.trim()) {
       setSaving(true);
       try {
         await fetch(`/api/delegates/${result.delegate.id}/note`, {
@@ -54,6 +55,29 @@ export default function CheckinResultCard({
       }
     }
     onConfirm();
+  }
+
+  if (result.type === "error") {
+    return (
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-warm-gold animate-pop-in overflow-y-auto p-4 sm:p-8">
+        <div className="text-center w-full max-w-2xl my-auto">
+          <p className="text-7xl sm:text-9xl mb-6">⟳</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-navy mb-3">
+            Connection Problem
+          </h2>
+          <p className="text-navy/80 text-lg sm:text-xl mb-10">
+            {result.message ||
+              "Couldn't reach the server. The delegate may be valid — please scan again."}
+          </p>
+          <button
+            onClick={onConfirm}
+            className="rounded-2xl bg-navy text-warm-white font-extrabold text-xl sm:text-2xl px-12 sm:px-16 py-4 sm:py-5 hover:bg-navy/90 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (result.type === "not_found") {

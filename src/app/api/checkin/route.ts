@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkInDelegate } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const id = typeof body.id === "string" ? body.id.trim() : "";
@@ -20,7 +22,19 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const result = await checkInDelegate(id, method);
+  let result;
+  try {
+    result = await checkInDelegate(id, method);
+  } catch (err) {
+    // Transient DB/network failure — return clean JSON with a 503 so the
+    // client shows a "try again" prompt instead of falsely rejecting a
+    // valid delegate as "not found".
+    console.error("checkInDelegate failed:", err);
+    return NextResponse.json(
+      { error: "Check-in service temporarily unavailable. Please try again." },
+      { status: 503 }
+    );
+  }
 
   if (result.status === "not_found") {
     return NextResponse.json(

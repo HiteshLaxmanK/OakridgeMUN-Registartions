@@ -14,6 +14,7 @@ export default function LiabilityFormCapture({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [pages, setPages] = useState<[string | null, string | null]>([null, null]);
   const [pageIndex, setPageIndex] = useState<0 | 1>(0);
   const [saving, setSaving] = useState(false);
@@ -62,9 +63,16 @@ export default function LiabilityFormCapture({
   function handleCapture() {
     const video = videoRef.current;
     if (!video || !video.videoWidth) return;
+    // Cap the long edge at 1600px — plenty legible for a signed document,
+    // but keeps each photo a few hundred KB instead of multi-MB at native
+    // phone-camera resolution, so two uploads + server-side PDF embedding
+    // finish comfortably inside a serverless function's time limit even
+    // on slow venue wifi.
+    const MAX_DIMENSION = 1600;
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(video.videoWidth, video.videoHeight));
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -77,6 +85,7 @@ export default function LiabilityFormCapture({
   }
 
   function handleRetake() {
+    setSaveError(null);
     setPages((prev) => {
       const next: [string | null, string | null] = [...prev];
       next[pageIndex] = null;
@@ -85,16 +94,22 @@ export default function LiabilityFormCapture({
   }
 
   function handleNextPage() {
+    setSaveError(null);
     setPageIndex(1);
   }
 
   function handlePrevPage() {
+    setSaveError(null);
     setPageIndex(0);
   }
 
   async function handleSave() {
     if (!pages[0] || !pages[1]) return;
     setSaving(true);
+    setSaveError(null);
+    // Abort a hung upload (bad venue wifi) instead of "Saving..." forever.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
     try {
       const formData = new FormData();
       const blob1 = await (await fetch(pages[0])).blob();
@@ -104,13 +119,16 @@ export default function LiabilityFormCapture({
       const res = await fetch(`/api/delegates/${delegateId}/liability-form`, {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error("Save failed");
       onDone();
     } catch (err) {
       console.error("Failed to save liability form", err);
-      setError("Could not save the form. Try again.");
+      setSaveError("Could not save the form. Check your connection and try again.");
       setSaving(false);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
@@ -147,6 +165,10 @@ export default function LiabilityFormCapture({
             </div>
           )}
         </div>
+
+        {saveError && (
+          <p className="text-bright-red font-semibold mb-4">{saveError}</p>
+        )}
 
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
           {!captured ? (
