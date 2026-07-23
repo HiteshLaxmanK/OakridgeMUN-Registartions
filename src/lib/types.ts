@@ -8,6 +8,7 @@ export interface Delegate {
   checkedIn: boolean;
   checkedInAt: string | null;
   checkedInMethod: "qr" | "manual" | null;
+  checkedInBy: string | null;
   note: string | null;
   liabilityFormOnFile: boolean;
   liabilityFormAt: string | null;

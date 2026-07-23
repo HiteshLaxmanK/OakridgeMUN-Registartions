@@ -39,6 +39,14 @@ export default function DashboardPage() {
     id: string;
     name: string;
   } | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/session")
+      .then((res) => res.json())
+      .then((data) => setRole(data.role))
+      .catch(() => setRole(null));
+  }, []);
 
   const fetchStats = useCallback(async () => {
     const res = await fetch("/api/stats");
@@ -253,6 +261,7 @@ export default function DashboardPage() {
                 <th className="px-4 py-3">Country</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Method</th>
+                {role === "admin" && <th className="px-4 py-3">Checked In By</th>}
                 <th className="px-4 py-3">Liability Form</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -294,6 +303,14 @@ export default function DashboardPage() {
                       <span className="text-warm-white/30">—</span>
                     )}
                   </td>
+                  {role === "admin" && (
+                    <td
+                      className="px-4 py-3 text-warm-white/60 max-w-[200px] truncate"
+                      title={d.checkedInBy || undefined}
+                    >
+                      {d.checkedInBy || <span className="text-warm-white/30">—</span>}
+                    </td>
+                  )}
                   <td className="px-4 py-3 whitespace-nowrap">
                     {d.liabilityFormOnFile ? (
                       <a

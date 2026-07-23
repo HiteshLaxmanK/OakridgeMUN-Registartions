@@ -5,6 +5,8 @@ import QrScanner from "@/components/QrScanner";
 import ManualSearch from "@/components/ManualSearch";
 import CheckinResultCard, { type ScanResult } from "@/components/CheckinResultCard";
 import LiabilityFormCapture from "@/components/LiabilityFormCapture";
+import StaffEmailPrompt from "@/components/StaffEmailPrompt";
+import { useStaffEmail } from "@/lib/useStaffEmail";
 
 type Role = "admin" | "oc_scan" | "oc_helpdesk" | null;
 
@@ -16,7 +18,9 @@ export default function CheckinPage() {
     name: string;
   } | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
   const lockedRef = useRef(false);
+  const { staffEmail, loaded: staffEmailLoaded, setStaffEmail, clearStaffEmail } = useStaffEmail();
 
   useEffect(() => {
     fetch("/api/session")
@@ -34,7 +38,11 @@ export default function CheckinPage() {
   const performCheckin = useCallback(async (id: string, method: "qr" | "manual") => {
     if (lockedRef.current) return;
     lockedRef.current = true;
-    setManualOpen(false);
+    // Show a loading state in place, instead of yanking the UI back to the
+    // scanner while the request is still in flight (that's what made manual
+    // check-in feel laggy — the search box vanished with no feedback until
+    // the network call resolved).
+    setChecking(true);
 
     // Abort a hung request instead of freezing this scanning station.
     const controller = new AbortController();
@@ -43,7 +51,7 @@ export default function CheckinPage() {
       const res = await fetch("/api/checkin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, method }),
+        body: JSON.stringify({ id, method, checkedInBy: staffEmail || undefined }),
         signal: controller.signal,
       });
       // A real 404 means the QR genuinely isn't a delegate. Any 5xx is a
@@ -67,8 +75,9 @@ export default function CheckinPage() {
       setResult({ type: "error" });
     } finally {
       clearTimeout(timeout);
+      setChecking(false);
     }
-  }, []);
+  }, [staffEmail]);
 
   const confirmResult = useCallback(() => {
     if (result && (result.type === "success" || result.type === "duplicate")) {
@@ -88,8 +97,15 @@ export default function CheckinPage() {
   const showManual = manualAllowed && manualOpen;
   const showScanner = scannerAllowed && !showManual && !liabilityDelegate;
 
+  // Only OC roles need to identify themselves — admin's own identity is
+  // already known from their session, no separate prompt needed.
+  const needsStaffEmail = role === "oc_scan" || role === "oc_helpdesk";
+  const staffGateActive = needsStaffEmail && staffEmailLoaded && !staffEmail;
+
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
+      {staffGateActive && <StaffEmailPrompt onSubmit={setStaffEmail} />}
+
       <div className="text-center mb-8">
         <h1 className="text-3xl font-extrabold mb-2">Delegate Check-in</h1>
         <p className="text-warm-white/50">
@@ -97,6 +113,14 @@ export default function CheckinPage() {
             ? "Search for a delegate to check them in."
             : "Point a delegate's QR code at the camera."}
         </p>
+        {needsStaffEmail && staffEmail && (
+          <p className="text-xs text-warm-white/30 mt-2">
+            Signed in as {staffEmail} ·{" "}
+            <button onClick={clearStaffEmail} className="underline hover:text-warm-white/60">
+              change
+            </button>
+          </p>
+        )}
       </div>
 
       {showScanner && <QrScanner onScan={(id) => performCheckin(id, "qr")} />}
@@ -115,6 +139,15 @@ export default function CheckinPage() {
       {showManual && (
         <div className="mt-8">
           <ManualSearch onSelect={(id) => performCheckin(id, "manual")} />
+        </div>
+      )}
+
+      {checking && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-navy/90 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-14 h-14 border-4 border-teal/25 border-t-teal rounded-full animate-spin" />
+            <p className="text-warm-white/70 font-semibold text-lg">Checking in...</p>
+          </div>
         </div>
       )}
 

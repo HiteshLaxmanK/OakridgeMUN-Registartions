@@ -3,7 +3,8 @@ import * as XLSX from "xlsx";
 import { getAllDelegates } from "@/lib/db";
 import type { Delegate } from "@/lib/types";
 
-const HEADERS = ["Name", "Committee", "Checked In", "Check-in Method", "Liability Form"];
+const HEADERS = ["Name", "Committee", "Checked In", "Check-in Method", "Checked In By", "Liability Form"];
+const LIABILITY_COL = 5;
 
 function methodLabel(method: Delegate["checkedInMethod"]): string {
   if (method === "qr") return "QR Scan";
@@ -17,6 +18,7 @@ function delegateRow(d: Delegate, origin: string): (string | number)[] {
     d.committee,
     d.checkedIn ? "Yes" : "No",
     d.checkedIn ? methodLabel(d.checkedInMethod) : "—",
+    d.checkedInBy || "—",
     d.liabilityFormOnFile ? `${origin}/api/delegates/${d.id}/liability-form` : "Not submitted",
   ];
 }
@@ -28,12 +30,12 @@ function sheetFor(delegates: Delegate[], origin: string): XLSX.WorkSheet {
     .map((d) => delegateRow(d, origin));
 
   const sheet = XLSX.utils.aoa_to_sheet([HEADERS, ...rows]);
-  sheet["!cols"] = [{ wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 16 }, { wch: 46 }];
+  sheet["!cols"] = [{ wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 16 }, { wch: 26 }, { wch: 46 }];
 
   rows.forEach((row, i) => {
-    const link = row[4];
+    const link = row[LIABILITY_COL];
     if (typeof link === "string" && link.startsWith("http")) {
-      const cellRef = XLSX.utils.encode_cell({ r: i + 1, c: 4 });
+      const cellRef = XLSX.utils.encode_cell({ r: i + 1, c: LIABILITY_COL });
       sheet[cellRef].l = { Target: link, Tooltip: "Open liability form PDF" };
       sheet[cellRef].v = "View PDF";
     }

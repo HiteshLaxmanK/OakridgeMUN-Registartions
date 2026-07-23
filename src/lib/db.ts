@@ -12,6 +12,7 @@ interface DelegateRow {
   checked_in: boolean;
   checked_in_at: string | null;
   checked_in_method: "qr" | "manual" | null;
+  checked_in_by: string | null;
   note: string | null;
   liability_form_on_file: boolean;
   liability_form_at: string | null;
@@ -29,6 +30,7 @@ function fromRow(row: DelegateRow): Delegate {
     checkedIn: row.checked_in,
     checkedInAt: row.checked_in_at,
     checkedInMethod: row.checked_in_method,
+    checkedInBy: row.checked_in_by,
     note: row.note,
     liabilityFormOnFile: row.liability_form_on_file,
     liabilityFormAt: row.liability_form_at,
@@ -182,33 +184,40 @@ export async function searchDelegates(query: SearchQuery): Promise<Delegate[]> {
 
 export async function checkInDelegate(
   id: string,
-  method: "qr" | "manual" = "qr"
+  method: "qr" | "manual" = "qr",
+  checkedInBy?: string
 ): Promise<
   | { status: "success"; delegate: Delegate }
   | { status: "duplicate"; delegate: Delegate }
   | { status: "not_found" }
 > {
-  const existing = await getDelegateById(id);
-  if (!existing) return { status: "not_found" };
-  if (existing.checkedIn) return { status: "duplicate", delegate: existing };
-
+  // Try the atomic conditional update directly instead of reading first —
+  // the common case (a fresh check-in) then only costs one round trip to
+  // Supabase instead of two, which is what was making manual check-in feel
+  // slow. The read-after-write below only runs for the rarer not-found /
+  // already-checked-in cases, where it's needed to tell them apart.
   const checkedInAt = new Date().toISOString();
   const { data, error } = await supabase
     .from("delegates")
-    .update({ checked_in: true, checked_in_at: checkedInAt, checked_in_method: method })
+    .update({
+      checked_in: true,
+      checked_in_at: checkedInAt,
+      checked_in_method: method,
+      checked_in_by: checkedInBy || null,
+    })
     .eq("id", id)
     .eq("checked_in", false)
     .select()
     .maybeSingle();
   if (error) throw new Error(error.message);
 
-  if (!data) {
-    // Someone else checked this delegate in between our read and write.
-    const latest = await getDelegateById(id);
-    return { status: "duplicate", delegate: latest ?? existing };
+  if (data) {
+    return { status: "success", delegate: fromRow(data as DelegateRow) };
   }
 
-  return { status: "success", delegate: fromRow(data as DelegateRow) };
+  const existing = await getDelegateById(id);
+  if (!existing) return { status: "not_found" };
+  return { status: "duplicate", delegate: existing };
 }
 
 export async function setDelegateNote(
