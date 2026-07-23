@@ -16,7 +16,7 @@ const ALL_LINKS = [
 const LINKS_BY_ROLE: Record<string, string[]> = {
   admin: ["/import", "/dashboard", "/checkin", "/verify", "/qr-stats"],
   oc_scan: ["/checkin", "/verify"],
-  oc_helpdesk: ["/checkin", "/dashboard"],
+  oc_helpdesk: ["/checkin", "/dashboard", "/verify"],
 };
 
 export default function Nav() {
