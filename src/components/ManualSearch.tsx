@@ -12,18 +12,35 @@ export default function ManualSearch({
 }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Delegate[]>([]);
+  const [searchError, setSearchError] = useState(false);
 
   useEffect(() => {
     if (!q.trim()) {
       setResults([]);
+      setSearchError(false);
       return;
     }
+    const controller = new AbortController();
     const handle = setTimeout(async () => {
-      const res = await fetch(`/api/delegates?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setResults((data.delegates || []).slice(0, 8));
+      try {
+        const res = await fetch(`/api/delegates?q=${encodeURIComponent(q)}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error(`search failed: ${res.status}`);
+        const data = await res.json();
+        setResults((data.delegates || []).slice(0, 8));
+        setSearchError(false);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error("Delegate search failed", err);
+        setResults([]);
+        setSearchError(true);
+      }
     }, 150);
-    return () => clearTimeout(handle);
+    return () => {
+      clearTimeout(handle);
+      controller.abort();
+    };
   }, [q]);
 
   return (
@@ -89,7 +106,12 @@ export default function ManualSearch({
             </button>
           );
         })}
-        {q.trim() && results.length === 0 && (
+        {searchError && (
+          <p className="text-bright-red font-semibold text-center py-4">
+            Search failed — check your connection and try again.
+          </p>
+        )}
+        {!searchError && q.trim() && results.length === 0 && (
           <p className="text-warm-white/30 text-center py-4">No delegates found.</p>
         )}
       </div>
