@@ -14,8 +14,10 @@ export default function LiabilityFormCapture({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [captured, setCaptured] = useState<string | null>(null);
+  const [pages, setPages] = useState<[string | null, string | null]>([null, null]);
+  const [pageIndex, setPageIndex] = useState<0 | 1>(0);
   const [saving, setSaving] = useState(false);
+  const captured = pages[pageIndex];
 
   useEffect(() => {
     let cancelled = false;
@@ -66,20 +68,39 @@ export default function LiabilityFormCapture({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    setCaptured(canvas.toDataURL("image/jpeg", 0.85));
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    setPages((prev) => {
+      const next: [string | null, string | null] = [...prev];
+      next[pageIndex] = dataUrl;
+      return next;
+    });
   }
 
   function handleRetake() {
-    setCaptured(null);
+    setPages((prev) => {
+      const next: [string | null, string | null] = [...prev];
+      next[pageIndex] = null;
+      return next;
+    });
+  }
+
+  function handleNextPage() {
+    setPageIndex(1);
+  }
+
+  function handlePrevPage() {
+    setPageIndex(0);
   }
 
   async function handleSave() {
-    if (!captured) return;
+    if (!pages[0] || !pages[1]) return;
     setSaving(true);
     try {
-      const blob = await (await fetch(captured)).blob();
       const formData = new FormData();
-      formData.append("file", blob, "liability-form.jpg");
+      const blob1 = await (await fetch(pages[0])).blob();
+      const blob2 = await (await fetch(pages[1])).blob();
+      formData.append("file", blob1, "liability-form-1.jpg");
+      formData.append("file", blob2, "liability-form-2.jpg");
       const res = await fetch(`/api/delegates/${delegateId}/liability-form`, {
         method: "POST",
         body: formData,
@@ -97,7 +118,7 @@ export default function LiabilityFormCapture({
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-navy p-4 sm:p-6 overflow-y-auto">
       <div className="w-full max-w-xl text-center my-auto">
         <p className="text-xs font-bold uppercase tracking-widest text-teal mb-2">
-          Step 2 of 2
+          Step 2 of 2 &middot; Page {pageIndex + 1} of 2
         </p>
         <h2 className="text-2xl sm:text-3xl font-extrabold mb-1">Liability Form</h2>
         <p className="text-warm-white/50 mb-6">{delegateName}</p>
@@ -145,13 +166,31 @@ export default function LiabilityFormCapture({
               >
                 Retake
               </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="rounded-2xl bg-teal text-navy font-extrabold text-lg sm:text-xl px-8 sm:px-12 py-4 sm:py-5 hover:bg-teal/90 transition-colors disabled:opacity-60"
-              >
-                {saving ? "Saving..." : "Save & Continue"}
-              </button>
+              {pageIndex === 1 && (
+                <button
+                  onClick={handlePrevPage}
+                  disabled={saving}
+                  className="rounded-2xl bg-warm-white/10 border border-warm-white/20 font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 hover:bg-warm-white/15 transition-colors disabled:opacity-50"
+                >
+                  Back to Page 1
+                </button>
+              )}
+              {pageIndex === 0 ? (
+                <button
+                  onClick={handleNextPage}
+                  className="rounded-2xl bg-teal text-navy font-extrabold text-lg sm:text-xl px-8 sm:px-12 py-4 sm:py-5 hover:bg-teal/90 transition-colors"
+                >
+                  Next Page &rarr;
+                </button>
+              ) : (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="rounded-2xl bg-teal text-navy font-extrabold text-lg sm:text-xl px-8 sm:px-12 py-4 sm:py-5 hover:bg-teal/90 transition-colors disabled:opacity-60"
+                >
+                  {saving ? "Saving..." : "Save & Continue"}
+                </button>
+              )}
             </>
           )}
         </div>

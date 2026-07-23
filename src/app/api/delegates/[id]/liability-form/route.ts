@@ -17,18 +17,19 @@ export async function POST(
   }
 
   const formData = await req.formData();
-  const file = formData.get("file");
-  if (!file || !(file instanceof File)) {
+  const files = formData.getAll("file").filter((f): f is File => f instanceof File);
+  if (files.length === 0) {
     return NextResponse.json({ error: "No image uploaded." }, { status: 400 });
   }
 
-  const imageBytes = Buffer.from(await file.arrayBuffer());
-
   const pdfDoc = await PDFDocument.create();
-  const jpgImage = await pdfDoc.embedJpg(imageBytes);
-  const { width, height } = jpgImage;
-  const page = pdfDoc.addPage([width, height]);
-  page.drawImage(jpgImage, { x: 0, y: 0, width, height });
+  for (const file of files) {
+    const imageBytes = Buffer.from(await file.arrayBuffer());
+    const jpgImage = await pdfDoc.embedJpg(imageBytes);
+    const { width, height } = jpgImage;
+    const page = pdfDoc.addPage([width, height]);
+    page.drawImage(jpgImage, { x: 0, y: 0, width, height });
+  }
   const pdfBytes = await pdfDoc.save();
 
   const { error: uploadError } = await supabase.storage
