@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { CommitteeProgress } from "@/lib/types";
 
 export default function CommitteeProgressList({
@@ -9,12 +12,23 @@ export default function CommitteeProgressList({
   selected?: string;
   onSelect?: (committee: string) => void;
 }) {
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/session")
+      .then((res) => res.json())
+      .then((data) => setRole(data.role))
+      .catch(() => setRole(null));
+  }, []);
+
+  const isAdmin = role === "admin";
+
   return (
     <div className="rounded-2xl border border-warm-white/10 bg-navy shadow-lg shadow-navy/40 p-6">
       <div className="flex items-center justify-between mb-5">
         <h2 className="font-bold text-lg">Committee Progress</h2>
         <div className="flex items-center gap-4">
-          {committees.length > 0 && (
+          {isAdmin && committees.length > 0 && (
             <a
               href="/api/export"
               className="text-xs font-semibold text-teal hover:underline"
@@ -61,15 +75,17 @@ export default function CommitteeProgressList({
                   />
                 </div>
               </button>
-              <a
-                href={`/api/export?committee=${encodeURIComponent(c.committee)}`}
-                title={`Download ${c.committee} as Excel`}
-                className="shrink-0 rounded-lg p-2 text-warm-white/40 hover:text-teal hover:bg-warm-white/[0.06] transition-colors"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 1.5v9M4 7l4 4 4-4M2.5 13.5h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </a>
+              {isAdmin && (
+                <a
+                  href={`/api/export?committee=${encodeURIComponent(c.committee)}`}
+                  title={`Download ${c.committee} as Excel`}
+                  className="shrink-0 rounded-lg p-2 text-warm-white/40 hover:text-teal hover:bg-warm-white/[0.06] transition-colors"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 1.5v9M4 7l4 4 4-4M2.5 13.5h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
+              )}
             </div>
           );
         })}

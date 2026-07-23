@@ -8,7 +8,7 @@ export type Role = "admin" | "oc_scan" | "oc_helpdesk";
 // (so "/api/delegates" also covers "/api/delegates/:id/liability-form" etc).
 const ROLE_ALLOWED_PATHS: Record<Exclude<Role, "admin">, string[]> = {
   oc_scan: ["/checkin", "/verify", "/api/checkin", "/api/delegates", "/api/stats", "/api/session"],
-  oc_helpdesk: ["/checkin", "/api/checkin", "/api/delegates", "/api/stats", "/api/session"],
+  oc_helpdesk: ["/checkin", "/dashboard", "/api/checkin", "/api/delegates", "/api/stats", "/api/session"],
 };
 
 function pathAllowed(pathname: string, allowed: string[]): boolean {
