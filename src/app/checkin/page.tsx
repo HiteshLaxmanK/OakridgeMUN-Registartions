@@ -25,12 +25,11 @@ export default function CheckinPage() {
       .catch(() => setRole(null));
   }, []);
 
-  // oc_scan only ever sees the scanner; oc_helpdesk only ever sees manual
-  // search (they have no QR to scan). Admin gets both, with the toggle.
-  const scannerAllowed = role === "admin" || role === "oc_scan";
+  // oc_scan only ever sees the scanner. Admin and oc_helpdesk get both,
+  // toggled with the button below.
+  const scannerAllowed = role === "admin" || role === "oc_scan" || role === "oc_helpdesk";
   const manualAllowed = role === "admin" || role === "oc_helpdesk";
-  const toggleVisible = role === "admin";
-  const manualForced = role === "oc_helpdesk";
+  const toggleVisible = role === "admin" || role === "oc_helpdesk";
 
   const performCheckin = useCallback(async (id: string, method: "qr" | "manual") => {
     if (lockedRef.current) return;
@@ -71,7 +70,7 @@ export default function CheckinPage() {
     lockedRef.current = false;
   }, []);
 
-  const showManual = manualForced || (manualAllowed && manualOpen);
+  const showManual = manualAllowed && manualOpen;
   const showScanner = scannerAllowed && !showManual && !liabilityDelegate;
 
   return (
@@ -79,7 +78,7 @@ export default function CheckinPage() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-extrabold mb-2">Delegate Check-in</h1>
         <p className="text-warm-white/50">
-          {manualForced
+          {showManual
             ? "Search for a delegate to check them in."
             : "Point a delegate's QR code at the camera."}
         </p>
