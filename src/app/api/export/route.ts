@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
-import { getAllDelegates } from "@/lib/db";
+import { getAllDelegates, TEST_COMMITTEE } from "@/lib/db";
 import type { Delegate } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -54,16 +54,21 @@ export async function GET(req: NextRequest) {
   const committeeParam = req.nextUrl.searchParams.get("committee");
   const origin = req.nextUrl.origin;
 
-  const all = await getAllDelegates();
+  const allRaw = await getAllDelegates();
   const workbook = XLSX.utils.book_new();
 
   if (committeeParam) {
-    const delegates = all.filter((d) => d.committee === committeeParam);
+    const delegates = allRaw.filter((d) => d.committee === committeeParam);
     if (delegates.length === 0) {
       return NextResponse.json({ error: "No delegates found for that committee." }, { status: 404 });
     }
     XLSX.utils.book_append_sheet(workbook, sheetFor(delegates, origin), safeSheetName(committeeParam));
   } else {
+    // Test delegates (e.g. mun@oakridge.in) are excluded from the
+    // all-committees export — the per-committee export above still
+    // allows pulling that sheet explicitly if ever needed.
+    const all = allRaw.filter((d) => d.committee !== TEST_COMMITTEE);
+
     // Combined "who registered" master list, checked first before the
     // per-committee breakdown sheets.
     XLSX.utils.book_append_sheet(workbook, sheetFor(all, origin), "Verification");

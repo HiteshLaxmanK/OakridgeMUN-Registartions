@@ -55,6 +55,8 @@ export default function DashboardPage() {
 
   const fetchDelegates = useCallback(async () => {
     const params = new URLSearchParams();
+    params.set("includeFacets", "1");
+    params.set("excludeTest", "1");
     if (q) params.set("q", q);
     if (committee) params.set("committee", committee);
     if (school) params.set("school", school);

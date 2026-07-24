@@ -136,6 +136,11 @@ export async function resetDelegates(): Promise<void> {
   }
 }
 
+// Committee used to mark internal test delegates (e.g. mun@oakridge.in),
+// so they can stay usable for testing the live QR-lookup/check-in flow
+// without polluting admin-facing stats, lists, and exports.
+export const TEST_COMMITTEE = "Oakridge MUN";
+
 export interface SearchQuery {
   q?: string;
   committee?: string;
@@ -144,11 +149,13 @@ export interface SearchQuery {
   checkedIn?: "true" | "false";
   liabilityForm?: "true" | "false";
   method?: "qr" | "manual";
+  excludeTest?: boolean;
 }
 
 export async function searchDelegates(query: SearchQuery): Promise<Delegate[]> {
   let builder = supabase.from("delegates").select("*");
 
+  if (query.excludeTest) builder = builder.neq("committee", TEST_COMMITTEE);
   if (query.checkedIn === "true") {
     builder = builder.eq("checked_in", true);
   } else if (query.checkedIn === "false") {
@@ -251,7 +258,7 @@ export async function markLiabilityFormOnFile(
 }
 
 export async function getStats(): Promise<Stats> {
-  const delegates = await getAllDelegates();
+  const delegates = (await getAllDelegates()).filter((d) => d.committee !== TEST_COMMITTEE);
   const total = delegates.length;
   const checkedIn = delegates.filter((d) => d.checkedIn).length;
   const remaining = total - checkedIn;
@@ -278,7 +285,7 @@ export async function getStats(): Promise<Stats> {
 }
 
 export async function getFacets() {
-  const delegates = await getAllDelegates();
+  const delegates = (await getAllDelegates()).filter((d) => d.committee !== TEST_COMMITTEE);
   const committees = Array.from(new Set(delegates.map((d) => d.committee))).sort();
   const schools = Array.from(new Set(delegates.map((d) => d.school))).sort();
   const countries = Array.from(new Set(delegates.map((d) => d.country))).sort();

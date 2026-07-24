@@ -44,12 +44,31 @@ export default function ManualSearch({
     };
   }, [q]);
 
-  // Not-yet-checked-in matches first — that's who a registration desk is
-  // actually looking for. Already-checked-in matches are still shown
-  // (staff needs to confirm "yes, already done") but sink to the bottom.
-  const sorted = readOnly
-    ? allResults
-    : [...allResults].sort((a, b) => Number(a.checkedIn) - Number(b.checkedIn));
+  // Relevance ranking — the search itself matches name/email/school/
+  // committee/country all equally, so without this a last name that
+  // happens to contain the query as a substring (e.g. "Kanikanti"
+  // matching "anika") ranked ahead of actual people named Anika, since
+  // the API just returns rows in table order.
+  function relevanceScore(d: Delegate, query: string): number {
+    const name = d.name.toLowerCase();
+    if (name === query) return 0;
+    if (name.startsWith(query)) return 1;
+    if (name.split(/\s+/).some((w) => w.startsWith(query))) return 2;
+    if (name.includes(query)) return 3;
+    const email = d.email.toLowerCase();
+    if (email.startsWith(query)) return 4;
+    if (email.includes(query)) return 5;
+    return 6;
+  }
+
+  const query = q.trim().toLowerCase();
+  const sorted = [...allResults].sort((a, b) => {
+    const rel = relevanceScore(a, query) - relevanceScore(b, query);
+    if (rel !== 0) return rel;
+    // Within the same relevance tier, not-yet-checked-in first — that's
+    // who a registration desk is actually looking for.
+    return readOnly ? 0 : Number(a.checkedIn) - Number(b.checkedIn);
+  });
   const results = sorted.slice(0, RESULT_CAP);
   const hiddenCount = sorted.length - results.length;
 
@@ -81,8 +100,8 @@ export default function ManualSearch({
                 )}
               </p>
               <p className="text-warm-white/50 text-sm truncate">{d.email}</p>
-              <p className="text-warm-white/50 text-sm">
-                {d.school} · {d.committee} · {d.country}
+              <p className="text-warm-white/70 text-sm font-medium">
+                {[d.school, d.committee, d.country].filter(Boolean).join(" · ")}
               </p>
               {readOnly && (
                 <p className="text-sm mt-1">

@@ -23,16 +23,18 @@ export async function GET(req: NextRequest) {
   const method =
     methodParam === "qr" || methodParam === "manual" ? methodParam : undefined;
 
-  const delegates = await searchDelegates({
-    q,
-    committee,
-    school,
-    country,
-    checkedIn,
-    liabilityForm,
-    method,
-  });
-  const facets = await getFacets();
+  // Facets (the distinct committee/school/country lists for filter dropdowns)
+  // require a second full-table scan and only the dashboard's filter UI
+  // needs them — every manual-search keystroke was paying for one anyway,
+  // sequentially after the actual search query, roughly doubling latency
+  // for no reason.
+  const includeFacets = searchParams.get("includeFacets") === "1";
+  const excludeTest = searchParams.get("excludeTest") === "1";
+
+  const [delegates, facets] = await Promise.all([
+    searchDelegates({ q, committee, school, country, checkedIn, liabilityForm, method, excludeTest }),
+    includeFacets ? getFacets() : Promise.resolve({ committees: [], schools: [], countries: [] }),
+  ]);
 
   return NextResponse.json({ delegates, facets });
 }
