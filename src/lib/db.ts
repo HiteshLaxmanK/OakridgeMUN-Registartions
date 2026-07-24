@@ -155,7 +155,12 @@ export interface SearchQuery {
 export async function searchDelegates(query: SearchQuery): Promise<Delegate[]> {
   let builder = supabase.from("delegates").select("*");
 
-  if (query.excludeTest) builder = builder.neq("committee", TEST_COMMITTEE);
+  // Test delegates stay out of the default (unfiltered) dashboard list so
+  // they don't pollute passive browsing — but an admin actively searching
+  // for one by name/email should still be able to find and check it in.
+  if (query.excludeTest && !query.q?.trim()) {
+    builder = builder.neq("committee", TEST_COMMITTEE);
+  }
   if (query.checkedIn === "true") {
     builder = builder.eq("checked_in", true);
   } else if (query.checkedIn === "false") {
