@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 
 export default function PasswordPrompt({
   delegateName,
   onCancel,
   onSubmit,
+  eyebrow = "Manual Check-in",
+  description,
+  placeholder = "Manual check-in password",
 }: {
   delegateName: string;
   onCancel: () => void;
   onSubmit: (password: string) => Promise<string | null>;
+  eyebrow?: string;
+  description?: ReactNode;
+  placeholder?: string;
 }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,19 +40,23 @@ export default function PasswordPrompt({
         className="w-full max-w-sm rounded-2xl bg-navy border border-warm-white/15 shadow-2xl shadow-navy/60 p-8 text-center"
       >
         <p className="text-xs font-bold uppercase tracking-widest text-teal mb-2">
-          Manual Check-in
+          {eyebrow}
         </p>
         <h2 className="text-xl font-extrabold mb-1">Confirm Password</h2>
         <p className="text-warm-white/50 text-sm mb-6">
-          Checking in{" "}
-          <span className="text-warm-white font-semibold">{delegateName}</span> without
-          scanning their QR code.
+          {description || (
+            <>
+              Checking in{" "}
+              <span className="text-warm-white font-semibold">{delegateName}</span> without
+              scanning their QR code.
+            </>
+          )}
         </p>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Manual check-in password"
+          placeholder={placeholder}
           autoFocus
           className="w-full rounded-xl bg-warm-white/[0.06] border border-warm-white/15 px-4 py-3 text-base mb-4 focus:outline-none focus:border-teal/60"
         />

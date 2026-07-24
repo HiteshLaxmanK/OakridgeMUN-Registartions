@@ -232,6 +232,22 @@ export async function checkInDelegate(
   return { status: "duplicate", delegate: existing };
 }
 
+export async function undoCheckIn(id: string): Promise<Delegate | undefined> {
+  const { data, error } = await supabase
+    .from("delegates")
+    .update({
+      checked_in: false,
+      checked_in_at: null,
+      checked_in_method: null,
+      checked_in_by: null,
+    })
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? fromRow(data as DelegateRow) : undefined;
+}
+
 export async function setDelegateNote(
   id: string,
   note: string

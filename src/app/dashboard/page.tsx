@@ -31,9 +31,9 @@ export default function DashboardPage() {
   const [method, setMethod] = useState<"" | "qr" | "manual">("");
   const searchSectionRef = useRef<HTMLHeadingElement>(null);
 
-  const [passwordFor, setPasswordFor] = useState<{ id: string; name: string } | null>(
-    null
-  );
+  const [passwordFor, setPasswordFor] = useState<
+    { id: string; name: string; mode: "checkin" | "uncheckin" } | null
+  >(null);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [liabilityDelegate, setLiabilityDelegate] = useState<{
     id: string;
@@ -97,7 +97,12 @@ export default function DashboardPage() {
 
   function requestManualCheckIn(id: string) {
     const d = delegates.find((x) => x.id === id);
-    setPasswordFor({ id, name: d?.name || "this delegate" });
+    setPasswordFor({ id, name: d?.name || "this delegate", mode: "checkin" });
+  }
+
+  function requestUndoCheckIn(id: string) {
+    const d = delegates.find((x) => x.id === id);
+    setPasswordFor({ id, name: d?.name || "this delegate", mode: "uncheckin" });
   }
 
   async function submitManualCheckIn(password: string): Promise<string | null> {
@@ -121,6 +126,31 @@ export default function DashboardPage() {
         setResult({ type: "duplicate", delegate: data.delegate });
       } else {
         setResult({ type: "success", delegate: data.delegate });
+      }
+      setPasswordFor(null);
+      fetchDelegates();
+      fetchStats();
+      return null;
+    } catch {
+      return "Something went wrong. Try again.";
+    }
+  }
+
+  async function submitUndoCheckIn(password: string): Promise<string | null> {
+    if (!passwordFor) return null;
+    try {
+      const res = await fetch(`/api/delegates/${passwordFor.id}/uncheckin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+
+      if (res.status === 401) {
+        return data.error || "Incorrect password.";
+      }
+      if (!res.ok) {
+        return data.error || "Could not undo check-in. Try again.";
       }
       setPasswordFor(null);
       fetchDelegates();
@@ -244,7 +274,12 @@ export default function DashboardPage() {
             so below md it's replaced with cards instead. */}
         <div className="md:hidden max-h-[70vh] overflow-y-auto divide-y divide-warm-white/5 transition-opacity duration-150">
           {delegates.map((d) => (
-            <DelegateCard key={d.id} delegate={d} onCheckIn={requestManualCheckIn} />
+            <DelegateCard
+              key={d.id}
+              delegate={d}
+              onCheckIn={requestManualCheckIn}
+              onUndoCheckIn={role === "admin" ? requestUndoCheckIn : undefined}
+            />
           ))}
           {delegates.length === 0 && (
             <p className="px-5 py-10 text-center text-warm-white/30 text-sm">
@@ -336,6 +371,14 @@ export default function DashboardPage() {
                         Check In
                       </button>
                     )}
+                    {d.checkedIn && role === "admin" && (
+                      <button
+                        onClick={() => requestUndoCheckIn(d.id)}
+                        className="text-bright-red/80 font-semibold hover:underline"
+                      >
+                        Undo Check-in
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -352,11 +395,28 @@ export default function DashboardPage() {
       </div>
       </div>
 
-      {passwordFor && (
+      {passwordFor && passwordFor.mode === "checkin" && (
         <PasswordPrompt
           delegateName={passwordFor.name}
           onCancel={() => setPasswordFor(null)}
           onSubmit={submitManualCheckIn}
+        />
+      )}
+
+      {passwordFor && passwordFor.mode === "uncheckin" && (
+        <PasswordPrompt
+          delegateName={passwordFor.name}
+          onCancel={() => setPasswordFor(null)}
+          onSubmit={submitUndoCheckIn}
+          eyebrow="Undo Check-in"
+          placeholder="Manual check-in password"
+          description={
+            <>
+              Reversing the check-in for{" "}
+              <span className="text-warm-white font-semibold">{passwordFor.name}</span>
+              . They&apos;ll need to check in again.
+            </>
+          }
         />
       )}
 

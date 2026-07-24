@@ -3,9 +3,11 @@ import type { Delegate } from "@/lib/types";
 export default function DelegateCard({
   delegate,
   onCheckIn,
+  onUndoCheckIn,
 }: {
   delegate: Delegate;
   onCheckIn: (id: string) => void;
+  onUndoCheckIn?: (id: string) => void;
 }) {
   return (
     <div className="p-4 space-y-2.5">
@@ -26,6 +28,14 @@ export default function DelegateCard({
             className="shrink-0 rounded-lg bg-teal text-navy text-xs font-bold px-3 py-2"
           >
             Check In
+          </button>
+        )}
+        {delegate.checkedIn && onUndoCheckIn && (
+          <button
+            onClick={() => onUndoCheckIn(delegate.id)}
+            className="shrink-0 rounded-lg bg-bright-red/15 text-bright-red text-xs font-bold px-3 py-2"
+          >
+            Undo
           </button>
         )}
       </div>
