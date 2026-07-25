@@ -9,14 +9,15 @@ const ALL_LINKS = [
   { href: "/import", label: "Import" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/checkin", label: "Check-in" },
+  { href: "/attendance", label: "Attendance" },
   { href: "/verify", label: "Verify" },
   { href: "/qr-stats", label: "QR Stats" },
 ];
 
 const LINKS_BY_ROLE: Record<string, string[]> = {
-  admin: ["/import", "/dashboard", "/checkin", "/verify", "/qr-stats"],
-  oc_scan: ["/checkin", "/verify"],
-  oc_helpdesk: ["/checkin", "/dashboard", "/verify"],
+  admin: ["/import", "/dashboard", "/checkin", "/attendance", "/verify", "/qr-stats"],
+  oc_scan: ["/checkin", "/attendance", "/verify"],
+  oc_helpdesk: ["/checkin", "/dashboard", "/attendance", "/verify"],
 };
 
 export default function Nav() {

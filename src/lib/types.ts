@@ -13,6 +13,12 @@ export interface Delegate {
   liabilityFormOnFile: boolean;
   liabilityFormAt: string | null;
   createdAt: string;
+  day1Present: boolean;
+  day1PresentAt: string | null;
+  day2Present: boolean;
+  day2PresentAt: string | null;
+  day3Present: boolean;
+  day3PresentAt: string | null;
 }
 
 export interface CommitteeProgress {

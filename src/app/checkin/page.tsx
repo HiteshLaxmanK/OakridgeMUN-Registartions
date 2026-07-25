@@ -71,9 +71,9 @@ export default function CheckinPage() {
         if (data.status === "not_found") {
           setResult({ type: "not_found" });
         } else if (data.status === "duplicate") {
-          setResult({ type: "duplicate", delegate: data.delegate });
+          setResult({ type: "duplicate", delegate: data.delegate, day: data.day });
         } else {
-          setResult({ type: "success", delegate: data.delegate });
+          setResult({ type: "success", delegate: data.delegate, day: data.day });
         }
       }
     } catch {

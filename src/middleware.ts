@@ -7,8 +7,27 @@ export type Role = "admin" | "oc_scan" | "oc_helpdesk";
 // A path matches if it equals the entry, or starts with "<entry>/"
 // (so "/api/delegates" also covers "/api/delegates/:id/liability-form" etc).
 const ROLE_ALLOWED_PATHS: Record<Exclude<Role, "admin">, string[]> = {
-  oc_scan: ["/checkin", "/verify", "/api/checkin", "/api/delegates", "/api/stats", "/api/session"],
-  oc_helpdesk: ["/checkin", "/dashboard", "/verify", "/api/checkin", "/api/delegates", "/api/stats", "/api/session"],
+  oc_scan: [
+    "/checkin",
+    "/verify",
+    "/attendance",
+    "/api/checkin",
+    "/api/delegates",
+    "/api/stats",
+    "/api/session",
+    "/api/current-day",
+  ],
+  oc_helpdesk: [
+    "/checkin",
+    "/dashboard",
+    "/verify",
+    "/attendance",
+    "/api/checkin",
+    "/api/delegates",
+    "/api/stats",
+    "/api/session",
+    "/api/current-day",
+  ],
 };
 
 function pathAllowed(pathname: string, allowed: string[]): boolean {
@@ -64,6 +83,7 @@ export const config = {
     "/checkin",
     "/verify",
     "/qr-stats",
+    "/attendance",
     "/api/import",
     "/api/reset",
     "/api/export",
@@ -71,6 +91,7 @@ export const config = {
     "/api/checkin",
     "/api/stats",
     "/api/session",
+    "/api/current-day",
     "/api/delegates",
     "/api/delegates/:path*",
   ],

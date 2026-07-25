@@ -4,8 +4,8 @@ import { useState } from "react";
 import type { Delegate } from "@/lib/types";
 
 export type ScanResult =
-  | { type: "success"; delegate: Delegate }
-  | { type: "duplicate"; delegate: Delegate }
+  | { type: "success"; delegate: Delegate; day?: 1 | 2 | 3 }
+  | { type: "duplicate"; delegate: Delegate; day?: 1 | 2 | 3 }
   | { type: "not_found" }
   | { type: "error"; message?: string };
 
@@ -104,6 +104,7 @@ export default function CheckinResultCard({
 
   const isDuplicate = result.type === "duplicate";
   const d = result.delegate;
+  const dayLabel = result.day ? ` — Day ${result.day}` : "";
 
   return (
     <div
@@ -114,7 +115,7 @@ export default function CheckinResultCard({
       <div className="text-center w-full max-w-2xl my-auto">
         <p className="text-7xl sm:text-9xl mb-4 leading-none">{isDuplicate ? "⚠" : "✓"}</p>
         <h2 className="text-3xl sm:text-5xl font-extrabold text-warm-white mb-6 sm:mb-10">
-          {isDuplicate ? "Already Checked In" : "Checked In"}
+          {isDuplicate ? `Already Checked In Today${dayLabel}` : `Checked In${dayLabel}`}
         </h2>
         <div className="bg-navy/40 rounded-2xl px-5 sm:px-10 py-6 sm:py-8 space-y-3 sm:space-y-4 mb-6">
           <Row label="Name" value={d.name} />
@@ -125,6 +126,18 @@ export default function CheckinResultCard({
             label={isDuplicate ? "Checked In At" : "Time"}
             value={formatTime(d.checkedInAt)}
           />
+          <div className="flex justify-between items-baseline gap-3 sm:gap-8">
+            <span className="text-warm-white/70 font-bold uppercase text-xs tracking-widest shrink-0">
+              Liability Form
+            </span>
+            <span
+              className={`text-lg sm:text-2xl font-extrabold text-right ${
+                d.liabilityFormOnFile ? "text-teal" : "text-warm-gold"
+              }`}
+            >
+              {d.liabilityFormOnFile ? "✓ On File" : "✕ Missing"}
+            </span>
+          </div>
         </div>
 
         <textarea

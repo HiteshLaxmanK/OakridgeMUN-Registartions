@@ -123,9 +123,9 @@ export default function DashboardPage() {
       } else if (!res.ok) {
         return data.error || "Check-in service unavailable. Try again.";
       } else if (data.status === "duplicate") {
-        setResult({ type: "duplicate", delegate: data.delegate });
+        setResult({ type: "duplicate", delegate: data.delegate, day: data.day });
       } else {
-        setResult({ type: "success", delegate: data.delegate });
+        setResult({ type: "success", delegate: data.delegate, day: data.day });
       }
       setPasswordFor(null);
       fetchDelegates();
@@ -296,6 +296,9 @@ export default function DashboardPage() {
                 <th className="px-4 py-3">School</th>
                 <th className="px-4 py-3">Committee</th>
                 <th className="px-4 py-3">Country</th>
+                <th className="px-4 py-3 text-center">D1</th>
+                <th className="px-4 py-3 text-center">D2</th>
+                <th className="px-4 py-3 text-center">D3</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Method</th>
                 {role === "admin" && <th className="px-4 py-3">Checked In By</th>}
@@ -323,6 +326,27 @@ export default function DashboardPage() {
                     title={d.country}
                   >
                     {d.country}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {d.day1Present ? (
+                      <span className="text-teal font-bold" title={d.day1PresentAt || undefined}>✓</span>
+                    ) : (
+                      <span className="text-warm-white/20">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {d.day2Present ? (
+                      <span className="text-teal font-bold" title={d.day2PresentAt || undefined}>✓</span>
+                    ) : (
+                      <span className="text-warm-white/20">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {d.day3Present ? (
+                      <span className="text-teal font-bold" title={d.day3PresentAt || undefined}>✓</span>
+                    ) : (
+                      <span className="text-warm-white/20">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     {d.checkedIn ? (

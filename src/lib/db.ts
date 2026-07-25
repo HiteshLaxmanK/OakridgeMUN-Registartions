@@ -2,6 +2,23 @@ import { randomUUID } from "crypto";
 import { supabase, LIABILITY_FORMS_BUCKET } from "./supabase";
 import type { Delegate, Stats } from "./types";
 
+// Conference runs 24-26 July 2026 in India — the calendar date in IST is
+// what determines "today", independent of whatever timezone the server
+// happens to be running in.
+const CONFERENCE_DAYS: Record<string, 1 | 2 | 3> = {
+  "2026-07-24": 1,
+  "2026-07-25": 2,
+  "2026-07-26": 3,
+};
+
+export function getCurrentConferenceDay(): 1 | 2 | 3 {
+  const istDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  if (istDate in CONFERENCE_DAYS) return CONFERENCE_DAYS[istDate];
+  // Outside the conference window (testing before/after) — clamp to the
+  // nearest real day instead of throwing, so nothing breaks.
+  return istDate < "2026-07-24" ? 1 : 3;
+}
+
 interface DelegateRow {
   id: string;
   name: string;
@@ -17,6 +34,12 @@ interface DelegateRow {
   liability_form_on_file: boolean;
   liability_form_at: string | null;
   created_at: string;
+  day1_present: boolean;
+  day1_present_at: string | null;
+  day2_present: boolean;
+  day2_present_at: string | null;
+  day3_present: boolean;
+  day3_present_at: string | null;
 }
 
 function fromRow(row: DelegateRow): Delegate {
@@ -35,6 +58,12 @@ function fromRow(row: DelegateRow): Delegate {
     liabilityFormOnFile: row.liability_form_on_file,
     liabilityFormAt: row.liability_form_at,
     createdAt: row.created_at,
+    day1Present: row.day1_present,
+    day1PresentAt: row.day1_present_at,
+    day2Present: row.day2_present,
+    day2PresentAt: row.day2_present_at,
+    day3Present: row.day3_present,
+    day3PresentAt: row.day3_present_at,
   };
 }
 
@@ -197,50 +226,114 @@ export async function searchDelegates(query: SearchQuery): Promise<Delegate[]> {
 export async function checkInDelegate(
   id: string,
   method: "qr" | "manual" = "qr",
-  checkedInBy?: string
+  checkedInBy?: string,
+  day: 1 | 2 | 3 = getCurrentConferenceDay()
 ): Promise<
-  | { status: "success"; delegate: Delegate }
-  | { status: "duplicate"; delegate: Delegate }
+  | { status: "success"; delegate: Delegate; day: 1 | 2 | 3 }
+  | { status: "duplicate"; delegate: Delegate; day: 1 | 2 | 3 }
   | { status: "not_found" }
 > {
-  // Try the atomic conditional update directly instead of reading first —
-  // the common case (a fresh check-in) then only costs one round trip to
-  // Supabase instead of two, which is what was making manual check-in feel
-  // slow. The read-after-write below only runs for the rarer not-found /
-  // already-checked-in cases, where it's needed to tell them apart.
-  const checkedInAt = new Date().toISOString();
+  const presentCol = `day${day}_present`;
+  const presentAtCol = `day${day}_present_at`;
+  const now = new Date().toISOString();
+
+  // Atomic conditional update, gated on *today's* presence flag rather than
+  // the overall checked_in flag — a delegate checked in on Day 1 can freely
+  // check in again on Day 2/3 (that's a fresh day, not a duplicate scan).
+  // checked_in/checked_in_at/method/by are kept as a "most recent scan"
+  // snapshot for the existing dashboard views that already depend on them.
   const { data, error } = await supabase
     .from("delegates")
     .update({
+      [presentCol]: true,
+      [presentAtCol]: now,
       checked_in: true,
-      checked_in_at: checkedInAt,
+      checked_in_at: now,
       checked_in_method: method,
       checked_in_by: checkedInBy || null,
     })
     .eq("id", id)
-    .eq("checked_in", false)
+    .eq(presentCol, false)
     .select()
     .maybeSingle();
   if (error) throw new Error(error.message);
 
   if (data) {
-    return { status: "success", delegate: fromRow(data as DelegateRow) };
+    return { status: "success", delegate: fromRow(data as DelegateRow), day };
   }
 
   const existing = await getDelegateById(id);
   if (!existing) return { status: "not_found" };
-  return { status: "duplicate", delegate: existing };
+  return { status: "duplicate", delegate: existing, day };
 }
 
 export async function undoCheckIn(id: string): Promise<Delegate | undefined> {
+  const existing = await getDelegateById(id);
+  if (!existing) return undefined;
+
+  const update: Record<string, unknown> = {
+    checked_in: false,
+    checked_in_at: null,
+    checked_in_method: null,
+    checked_in_by: null,
+  };
+  // Clear whichever day's flag matches the most recent scan, rather than
+  // assuming "today" — the dashboard's Undo button reflects the overall
+  // checked_in snapshot, which may be from an earlier day if this delegate
+  // hasn't been scanned again since.
+  if (existing.checkedInAt) {
+    if (existing.day3PresentAt === existing.checkedInAt) {
+      update.day3_present = false;
+      update.day3_present_at = null;
+    } else if (existing.day2PresentAt === existing.checkedInAt) {
+      update.day2_present = false;
+      update.day2_present_at = null;
+    } else if (existing.day1PresentAt === existing.checkedInAt) {
+      update.day1_present = false;
+      update.day1_present_at = null;
+    }
+  }
+
   const { data, error } = await supabase
     .from("delegates")
-    .update({
-      checked_in: false,
-      checked_in_at: null,
-      checked_in_method: null,
-      checked_in_by: null,
-    })
+    .update(update)
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? fromRow(data as DelegateRow) : undefined;
+}
+
+// Direct set (not conditional) for the roll-call attendance page — a
+// checkbox always reflects the exact desired state, so this isn't gated
+// on the current value the way checkInDelegate's scan-duplicate guard is.
+// Un-ticking only clears that day's flag; it deliberately leaves the
+// checked_in "latest known status" snapshot alone rather than risk
+// clobbering a more recent day's record.
+export async function setDayPresence(
+  id: string,
+  day: 1 | 2 | 3,
+  present: boolean,
+  checkedInBy?: string
+): Promise<Delegate | undefined> {
+  const presentCol = `day${day}_present`;
+  const presentAtCol = `day${day}_present_at`;
+  const now = new Date().toISOString();
+
+  const update: Record<string, unknown> = {
+    [presentCol]: present,
+    [presentAtCol]: present ? now : null,
+  };
+  if (present) {
+    update.checked_in = true;
+    update.checked_in_at = now;
+    update.checked_in_method = "manual";
+    update.checked_in_by = checkedInBy || null;
+  }
+
+  const { data, error } = await supabase
+    .from("delegates")
+    .update(update)
     .eq("id", id)
     .select()
     .maybeSingle();

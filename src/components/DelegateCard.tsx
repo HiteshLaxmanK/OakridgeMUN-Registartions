@@ -51,6 +51,19 @@ export default function DelegateCard({
             ? `✓ Checked In${delegate.checkedInMethod === "manual" ? " (Manual)" : ""}`
             : "Not Checked In"}
         </span>
+        {([1, 2, 3] as const).map((n) => {
+          const present = n === 1 ? delegate.day1Present : n === 2 ? delegate.day2Present : delegate.day3Present;
+          return (
+            <span
+              key={n}
+              className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                present ? "bg-teal/15 text-teal" : "bg-warm-white/5 text-warm-white/30"
+              }`}
+            >
+              D{n} {present ? "✓" : "—"}
+            </span>
+          );
+        })}
         <span
           className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
             delegate.liabilityFormOnFile
