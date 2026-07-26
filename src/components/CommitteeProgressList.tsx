@@ -46,6 +46,22 @@ export default function CommitteeProgressList({
           )}
         </div>
       </div>
+      {isAdmin && (
+        <div className="flex flex-wrap items-center gap-2 mb-5 pb-5 border-b border-warm-white/10">
+          <span className="text-xs font-semibold text-warm-white/40 uppercase tracking-widest mr-1">
+            Day Attendance
+          </span>
+          {([1, 2, 3] as const).map((day) => (
+            <a
+              key={day}
+              href={`/api/export?day=${day}`}
+              className="rounded-lg bg-teal/10 border border-teal/30 text-teal text-xs font-bold px-3 py-1.5 hover:bg-teal/20 transition-colors"
+            >
+              Day {day} (.xlsx)
+            </a>
+          ))}
+        </div>
+      )}
       <div className="space-y-4">
         {committees.map((c) => {
           const pct = c.total > 0 ? Math.round((c.checkedIn / c.total) * 100) : 0;
