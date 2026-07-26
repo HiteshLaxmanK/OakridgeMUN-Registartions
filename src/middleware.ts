@@ -16,6 +16,7 @@ const ROLE_ALLOWED_PATHS: Record<Exclude<Role, "admin">, string[]> = {
     "/api/stats",
     "/api/session",
     "/api/current-day",
+    "/api/export",
   ],
   oc_helpdesk: [
     "/checkin",
@@ -27,6 +28,7 @@ const ROLE_ALLOWED_PATHS: Record<Exclude<Role, "admin">, string[]> = {
     "/api/stats",
     "/api/session",
     "/api/current-day",
+    "/api/export",
   ],
 };
 

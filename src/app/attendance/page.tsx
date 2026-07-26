@@ -141,6 +141,21 @@ export default function AttendancePage() {
             </button>
           ))}
         </div>
+
+        <a
+          href={committee ? `/api/export?committee=${encodeURIComponent(committee)}` : undefined}
+          aria-disabled={!committee}
+          className={`shrink-0 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold transition-colors ${
+            committee
+              ? "bg-teal/10 border-teal/40 text-teal hover:bg-teal/20"
+              : "bg-warm-white/[0.04] border-warm-white/10 text-warm-white/30 pointer-events-none"
+          }`}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1.5v9M4 7l4 4 4-4M2.5 13.5h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Download Committee Attendance
+        </a>
       </div>
 
       {committee && (
